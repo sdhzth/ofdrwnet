@@ -383,20 +383,28 @@ nuget.org 已开始淘汰长期 API Key：**2026-08-17 起新签发的 Key 有�
    | Repository Owner | `sdhzth` |
    | Repository | `ofdrwnet` |
    | Workflow File | `publish.yml`　← **只填文件名**，不带 `.github/workflows/` 路径，不要填 workflow 的 `name:` |
-   | Environment | 留空（若后续启用 GitHub Environment 则两处必须一致） |
+   | Environment | `release`　← 必须与工作流的 `environment: release` 一致 |
 
 3. 本仓库 **Settings → Secrets and variables → Actions → Variables** 新增变量
    `NUGET_USER` = 你的 nuget.org 用户名（**profile name，不是登录邮箱**）
+   —— 本仓库已配好：`NUGET_USER=sdhzth`
+
+4. 仓库已配置受保护的 **`release` 环境**（Required reviewers：`sdhzth`）。
+   推 tag 后工作流会停在「等待审批」，你批准后才会真正推送到 nuget.org。
 
 **发布：**
 
 ```bash
 # 打 tag 即可触发（tag 版本必须与 Directory.Build.props 的 VersionPrefix 一致，否则工作流会报错中止）
 git tag v1.2.0 && git push origin v1.2.0
+# 然后到 https://github.com/sdhzth/ofdrwnet/actions 批准 release 环境的部署
 ```
 
 工作流 [`.github/workflows/publish.yml`](.github/workflows/publish.yml) 会自动完成：
 OIDC 换临时 Key → 按依赖拓扑顺序推送 14 个包 + 14 个符号包 → 生成发布摘要。
+
+> **审批门禁的作用**：`release` 环境的 required reviewer 让「谁都能推 tag」变成「只有你能放行发布」，
+> 配合 Trusted Publishing 的环境绑定，OIDC 身份、密钥作用域、发布审批三者对齐。
 
 #### 方式 B：本地命令行（适合私有源 / 临时补发）
 

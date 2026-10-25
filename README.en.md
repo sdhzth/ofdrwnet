@@ -399,10 +399,14 @@ repository any more.
    | Repository Owner | `sdhzth` |
    | Repository | `ofdrwnet` |
    | Workflow File | `publish.yml`　← **file name only**, without the `.github/workflows/` path, and not the workflow's `name:` |
-   | Environment | leave empty (if you later use a GitHub Environment, both sides must match) |
+   | Environment | `release`　← must match the workflow's `environment: release` |
 
 3. In this repository, go to **Settings → Secrets and variables → Actions → Variables** and add
    `NUGET_USER` = your nuget.org username (**profile name, not the sign-in email**)
+   — already configured here: `NUGET_USER=sdhzth`
+
+4. The repository has a protected **`release` environment** (Required reviewers: `sdhzth`).
+   After you push a tag the workflow pauses for approval; only then are the packages pushed.
 
 **Publish:**
 
@@ -410,11 +414,18 @@ repository any more.
 # pushing a tag triggers the workflow (the tag version must match VersionPrefix in
 # Directory.Build.props, otherwise the workflow fails fast)
 git tag v1.2.0 && git push origin v1.2.0
+# then approve the release deployment at
+# https://github.com/sdhzth/ofdrwnet/actions
 ```
 
 The workflow [`.github/workflows/publish.yml`](.github/workflows/publish.yml) then handles everything:
 exchange the OIDC token for a temporary key → push the 14 packages + 14 symbol packages in dependency
 topological order → write a release summary.
+
+> **What the approval gate buys you**: the `release` environment's required reviewer turns
+> "anyone can push a tag" into "only you can let a release through". Combined with the
+> environment binding in Trusted Publishing, the OIDC identity, the secret scope and the release
+> approval all line up.
 
 #### Option B: command line (private feeds / ad-hoc re-push)
 

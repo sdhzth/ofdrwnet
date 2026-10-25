@@ -13,9 +13,11 @@ name: Publish NuGet
 #        Repository Owner : sdhzth
 #        Repository       : ofdrwnet
 #        Workflow File    : publish.yml      ← 只填文件名，不带 .github/workflows/ 路径
-#        Environment      : 留空（若改用 environment 则两处必须一致）
+#        Environment      : release          ← 必须与本工作流的 environment: release 一致
 #   3. 本仓库 Settings → Secrets and variables → Actions → Variables
 #        新增变量 NUGET_USER = 你的 nuget.org 用户名（profile name，不是邮箱）
+#        （本仓库已配好：NUGET_USER=sdhzth）
+#   4. 仓库已配置受保护的 release 环境（审批人 sdhzth），推送后需人工审批才会真正发布
 #
 # 触发方式：推送形如 v1.2.3 的 tag，或手动 workflow_dispatch。
 # ============================================================================
@@ -36,6 +38,9 @@ permissions:
 jobs:
   publish:
     runs-on: windows-latest
+    # 使用受保护的 release 环境：推送前需人工审批（审批人 sdhzth）
+    # ⚠️ nuget.org 的 Trusted Publisher 策略中 Environment 必须与此一致（填 release）
+    environment: release
     permissions:
       contents: read
       id-token: write          # 申请 OIDC 身份令牌（发布必需）
@@ -48,6 +53,18 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+
+      - name: Check NUGET_USER
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${{ vars.NUGET_USER }}" ]; then
+            echo "✘ 仓库变量 NUGET_USER 未设置。"
+            echo "  设置位置: Settings → Secrets and variables → Actions → Variables"
+            echo "  取值: 你的 nuget.org 用户名（profile name，不是登录邮箱）"
+            exit 1
+          fi
+          echo "NUGET_USER = ${{ vars.NUGET_USER }}"
 
       - name: Resolve version
         id: version
