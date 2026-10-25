@@ -1,7 +1,7 @@
-namespace OfdHWriter;
+namespace NetOfd.Emr;
 
 /// <summary>演示病历数据（虚构患者，仅用于合规演示）。</summary>
-internal sealed class EmrCase
+public sealed class EmrCaseData
 {
     public string Hospital = "xx市第三人民医院";
     public string PatientName = "张建国";

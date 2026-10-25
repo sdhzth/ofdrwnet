@@ -11,5 +11,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\NetOfd\NetOfd.csproj" />
     <ProjectReference Include="..\..\src\NetOfd.Emr\NetOfd.Emr.csproj" />
+    <ProjectReference Include="..\..\src\NetOfd.Converter\NetOfd.Converter.csproj" />
   </ItemGroup>
 </Project>

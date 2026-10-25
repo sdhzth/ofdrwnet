@@ -4,6 +4,8 @@
     <RootNamespace>NetOfd</RootNamespace>
     <PackageId>NetOfd</PackageId>
     <Description>NetOfd - All-in-one OFD (GB/T 33190) Reader &amp; Writer meta-package</Description>
+    <!-- 聚合包同时包含 Apache-2.0 移植模块与 MIT 自有模块（NetOfd.Emr），采用组合协议 -->
+    <PackageLicenseExpression>Apache-2.0 OR MIT</PackageLicenseExpression>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\NetOfd.Core\NetOfd.Core.csproj" />

@@ -6,7 +6,7 @@ namespace NetOfd.Pkg.Tool;
 /// <summary>
 /// 命名空间升级器：把元素及其所有后代的命名空间统一升级为 OFD 命名空间。
 /// <para>
-/// 与 <see cref="NetOfd.Reader.Tools.NameSpaceCleaner"/> 正好互补：
+/// 与 <c>NetOfd.Reader.Tools.NameSpaceCleaner</c> 正好互补：
 /// Cleaner 是「降级」——把第三方非标准命名空间清成无命名空间，便于宽松读取；
 /// Modifier 是「升级」——把无命名空间（或错误命名空间）的元素补回标准 OFD
 /// 命名空间，便于写回合规文件。

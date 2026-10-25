@@ -4,6 +4,8 @@
     <RootNamespace>NetOfd.Full</RootNamespace>
     <PackageId>NetOfd.Full</PackageId>
     <Description>NetOfd.Full - 完整聚合包（对应 Java ofdrw-full），包含 OFD 读写、渲染、数字签名、国密、归档与工具全部子模块</Description>
+    <!-- 聚合包同时包含 Apache-2.0 移植模块与 MIT 自有模块（NetOfd.Emr），采用组合协议 -->
+    <PackageLicenseExpression>Apache-2.0 OR MIT</PackageLicenseExpression>
   </PropertyGroup>
   <ItemGroup>
     <!-- 与现有 NetOfd 聚合一致的 7 个核心模块 -->

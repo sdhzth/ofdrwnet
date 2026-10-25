@@ -232,7 +232,7 @@ public static class OfdPageRenderer
     // ── 页面注释（对齐 Java AWTMaker.writePage 注解对象循环）────
 
     /// <summary>
-    /// 渲染页面注释外观：每个 <see cref="Annot.Appearance"/>（CT_PageBlock）按 Boundary
+    /// 渲染页面注释外观：每个 <see cref="NetOfd.Core.Annotation.PageAnnot.Annot.Appearance"/>（CT_PageBlock）按 Boundary
     /// 平移到页面位置后，递归绘制其中的图元（文字 / 路径 / 图像 / 复合对象）。
     /// 电子印章（Stamp）、水印等注释均走此路径。
     /// </summary>
@@ -268,8 +268,12 @@ public static class OfdPageRenderer
     /// <summary>
     /// 递归渲染页块容器内的子元素：图元直接绘制，PageBlock/Content/Layer 下钻，
     /// CompositeObject 经 <see cref="ResourceManage.GetCompositeGraphicUnit"/> 解引用后递归。
-    /// <param name="block">页块容器（Appearance / CT_PageBlock / Content 等任意 OFDElement）</param>
     /// </summary>
+    /// <param name="canvas">Skia 画布。</param>
+    /// <param name="block">页块容器（Appearance / CT_PageBlock / Content 等任意 OFDElement）</param>
+    /// <param name="resMgt">资源管理器，用于解引用复合对象等资源引用。</param>
+    /// <param name="opts">转换选项（PPM 等）。</param>
+    /// <param name="depth">当前递归深度，用于防御自引用或超深嵌套。</param>
     private static void RenderBlockChildren(SKCanvas canvas, OFDElement block,
         ResourceManage resMgt, ConverterOptions opts, int depth)
     {

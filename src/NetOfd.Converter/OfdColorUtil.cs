@@ -122,6 +122,8 @@ public static class OfdColorUtil
     /// 若 <paramref name="color"/> 挂接渐变底纹（AxialShd / RadialShd），创建对应的
     /// SkiaSharp 渐变着色器；否则返回 null（调用方回退纯色）。
     /// </summary>
+    /// <param name="color">待解析的图元颜色（可为 null）。</param>
+    /// <param name="resMgt">资源管理器，用于解析渐变中引用的资源。</param>
     /// <param name="boundary">图元 Boundary（可为 null）。着色器坐标按 OFD 规范属于图元局部坐标系，
     /// 渲染矩阵为 <c>Scale(PPM)·Translate(Boundary)·CTM</c>，故此处需将绝对坐标减去 Boundary 偏移，
     /// 使其与相对化后的 AbbreviatedData 路径处于同一局部坐标系（否则渐变会被 Boundary 重复平移）。</param>

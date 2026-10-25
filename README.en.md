@@ -22,10 +22,10 @@ Chinese national cryptography (GM/T 0099-2020) and OFD-A archiving (GB/T 42133-2
 
 ## OFD-H Electronic Medical Record support (GB/T 48666-2026)
 
-The `NetOfd.Emr` module together with the `samples/OfdHWriter` and `samples/OfdHExporter`
-command-line tools implement **GB/T 48666-2026 *Technical requirements for electronic medical record
-layout documents***: they generate OFD-H conformant layout documents and embed machine-readable
-structured clinical data inside them.
+The `NetOfd.Emr` module implements **GB/T 48666-2026 *Technical requirements for electronic medical
+record layout documents***: as a library API it generates OFD-H conformant layout documents and
+embeds machine-readable structured clinical data inside them.
+`samples/OfdHWriter` / `samples/OfdHExporter` are command-line wrappers around it.
 
 ### Standards covered
 
@@ -44,7 +44,7 @@ ISO 3166-1 (nationality), ICD-10 (disease classification), ICD-9-CM-3 (procedure
 
 ### Clause-by-clause mapping
 
-The header comment of `samples/OfdHWriter/EmrGenerator.cs` records the generation pipeline against
+The header comment of `src/NetOfd.Emr/OfdHDocumentGenerator.cs` records the generation pipeline against
 the standard clauses:
 
 | Clause | Requirement | Implementation |
@@ -64,10 +64,26 @@ the standard clauses:
 | 6.3 / 8 c) d) e) | SM2 + SM3 national-crypto signature, protecting everything except the annotation list and the signature list | `OfdSigner` + `GBT35275DSContainer` |
 | GM/T 0099 §7.4.3 | Anti-tampering / integrity protection | `OfdIntegrity` + `GmProtectSigner` |
 
-### Generator: samples/OfdHWriter
+### Generator: NetOfd.Emr.OfdHDocumentGenerator
 
-```bash
-dotnet run --project samples/OfdHWriter -- <out.ofd> [--work <work-dir>] [--no-sign]
+```csharp
+using NetOfd.Emr;
+
+var result = OfdHDocumentGenerator.Generate(new OfdHOptions
+{
+    OutputPath = "record.ofd",
+    CaseData   = myCaseData,          // pass an EmrCaseData; null uses the built-in demo data
+    // FontPath = "/path/to/chinese.ttf",   // auto-detected per platform when omitted
+});
+
+if (!result.Success)
+{
+    Console.Error.WriteLine(result.Error);
+    return;
+}
+
+Console.WriteLine($"{result.PageCount} pages / {result.SizeBytes} bytes / {result.SignatureCount} signature(s)");
+Console.WriteLine($"All signatures valid: {result.AllSignaturesValid}, integrity: {result.IntegrityVerified}");
 ```
 
 Produces a **3-page A4 portrait** document (20 mm margins) in OFD-H layout form:
@@ -78,19 +94,40 @@ Produces a **3-page A4 portrait** document (20 mm margins) in OFD-H layout form:
 | 2 | Admission record (general items, chief complaint, present illness, past history, personal + family history, physical examination) |
 | 3 | Auxiliary examination (ECG text + image + figure caption), preliminary diagnosis and treatment plan, physician signature, date |
 
-The document also embeds: FangSong font data, an ECG image resource, an internal attachment,
+The document also embeds: CJK font data, an ECG image resource, an internal attachment,
 a quality-control review annotation, a version snapshot, a machine-readable information tag plus
 a WS/T 500 shared document tag, an SM2withSM3 national-crypto signature, and GM/T 0099
 anti-tampering protection.
 
+Common `OfdHOptions` properties:
+
+| Property | Default | Description |
+|---|---|---|
+| `OutputPath` | required | Output .ofd path |
+| `CaseData` | built-in demo data | The medical record data (`EmrCaseData`) |
+| `SkipSignature` | `false` | Skip signing and anti-tampering (structural debugging only) |
+| `DocumentId` | auto-generated GUID | Document identifier DocID; pass a fixed value for reproducible output |
+| `FontPath` | auto-detected per platform | CJK font file to embed |
+| `SkipFontEmbeddingWhenMissing` | `true` | Log a warning and skip embedding when no font is found (`false` throws instead) |
+| `SigningTime` | current time | Signature timestamp |
+| `Log` | `Console.Out` | Log output target |
+
+### Command-line wrapper
+
+```bash
+dotnet run --project samples/OfdHWriter -- <out.ofd> [--work <work-dir>] [--font <font-path>] [--no-sign] [--no-preview]
+```
+
 Exit codes: `0` success with signature self-check passed / `1` invalid arguments /
 `2` generation error / `3` signature self-check failed.
-`--no-sign` skips signing and anti-tampering (for structural debugging only).
 
 ### Structured data: the NetOfd.Emr module
 
 | Class | Responsibility |
 |---|---|
+| `OfdHDocumentGenerator` | OFD-H layout document generator (see above) |
+| `OfdHOptions` / `OfdHResult` | Generation options and result object |
+| `EmrCaseData` | Medical record data model (patient, encounter, diagnoses, orders, …) |
 | `EmrStructuredData` | Bridge between layout page and machine-readable data: one field set is both rendered into the OFD-H layout and written into the structured tag using standard DE codes |
 | `Wst500Builder` | Serializes `EmrStructuredData` into a WS/T 500.32 shared document (HL7 CDA R2 `ClinicalDocument`) |
 | `Wst500Codes` | Encoding constant dictionary: 13 section LOINC codes, 56 data element DE codes, 11 OID roots, 11 value-set codes |
@@ -134,6 +171,16 @@ dotnet run --project samples/OfdHExporter -- <in.ofd> [--out <output-dir>] [--fo
 Exit codes: `0` success / `1` invalid arguments or missing input / `2` export error /
 `3` no structured data tag found in the document.
 
+### Test coverage
+
+OFD-H automated tests live in `tests/NetOfd.Tests/Emr/`:
+
+| Test class | Cases | Coverage |
+|---|---|---|
+| `OfdHDocumentGeneratorTest` | 18 | End-to-end generation pipeline: 3-page structure, DocType, DocID, package directory structure (Table 1), linearization order, font embedding, version snapshot, two custom tags, machine-readable information triple, structured data reverse export, CDA structure, attachment byte equality, annotations, signature verification, anti-tampering integrity, three-page text extraction |
+| `OfdHGeneratorOptionTest` | 5 | Skipping signatures, non-existent font path (skip vs. throw), custom case data, automatic DocID |
+| `Wst500SharedDocumentTest` | 12 | WS/T 500.32 constant self-consistency, CDA structural constraints, tag write/read round trip |
+
 ### Known limitations
 
 Stated plainly so the usable scope can be assessed:
@@ -142,9 +189,7 @@ Stated plainly so the usable scope can be assessed:
 - **Data element coverage 33/56**: about 23 of the 56 DE code constants are not yet written into the shared document (medication, blood type, birth weight, autopsy flag, pathology number, external cause, etc.).
 - **Some fields reach the layout but not the machine-readable tag**: encounter-related fields of `EmrStructuredData` (age, admission count, admission/discharge times, admission route, admission/discharge departments, ward, payment method, responsible nurse, coding physician, …) currently appear on the layout page only, and are not yet part of the structured tag.
 - **Only one shared document part is covered**: only WS/T 500.32 (inpatient medical record front page) is implemented; the remaining WS/T 500 series parts are out of scope for now.
-- **No end-to-end automated test for the generator**: the 3-page structure, font embedding, signing, anti-tampering and linearization of `OfdHWriter` are verified manually. The structured-data side does have 12 dedicated unit tests (including an XML → tag → export round trip).
-- **Font embedding uses a Windows-only path**: FangSong is read from `C:\Windows\Fonts\simfang.ttf`; on Linux / macOS you must supply the font yourself.
-- **The demo document ID is fixed**: `OfdHWriter` uses a constant `DocID` so demo output is reproducible; production code should use `Guid.NewGuid()`.
+- **Font embedding depends on a CJK font being available**: when `FontPath` is not set explicitly, the generator probes the platform for FangSong / CJK fonts. If none is found it logs a warning and skips embedding (clause 7.2 b is then not satisfied), so production use should supply a font file explicitly.
 
 ## Project structure
 
@@ -152,7 +197,7 @@ Stated plainly so the usable scope can be assessed:
 netofd/
 ├── src/
 │   ├── NetOfd.Core/          # Core: OFD XML element model + base types (ST_*/CT_*)
-│   ├── NetOfd.Emr/           # Electronic medical record structured data (WS/T 500 shared document + standard export)
+│   ├── NetOfd.Emr/           # OFD-H electronic medical record (GB/T 48666-2026): layout document generation + WS/T 500 shared document + standard export
 │   ├── NetOfd.Pkg/           # Virtual container + ZIP packaging
 │   ├── NetOfd.Font/          # Font management and metrics
 │   ├── NetOfd.Reader/        # OFD parser / text extraction / keyword location
@@ -166,7 +211,7 @@ netofd/
 │   ├── NetOfd.Full/          # Aggregate of all modules
 │   └── NetOfd/               # Unified entry point (meta-package)
 ├── tests/
-│   └── NetOfd.Tests/         # 900+ unit / integration / performance tests
+│   └── NetOfd.Tests/         # 950+ unit / integration / performance tests
 ├── samples/                  # Samples (write / sign / render / convert / OFD-H generation / structured export)
 │   └── OfdHWriter/           # GB/T 48666-2026 electronic medical record OFD-H generator
 └── Directory.Build.props     # Shared build properties
@@ -260,20 +305,20 @@ dotnet run --project tests/NetOfd.TestConsole -- ofda-convert <in.ofd> <out.ofd>
 
 ### Generating an OFD-H electronic medical record
 
-`samples/OfdHWriter` is a standalone OFD-H generator (GB/T 48666-2026). It emits 3 pages of layout
-content with an embedded FangSong font, an ECG attachment, a quality-control review annotation,
-a version snapshot, custom tags (machine-readable information + structured clinical data),
-an SM2withSM3 national-crypto signature and GM/T 0099 anti-tampering protection:
+`samples/OfdHWriter` is the command-line wrapper around `NetOfd.Emr.OfdHDocumentGenerator`.
+It emits 3 pages of layout content with an embedded CJK font, an ECG attachment, a quality-control
+review annotation, a version snapshot, custom tags (machine-readable information + structured
+clinical data), an SM2withSM3 national-crypto signature and GM/T 0099 anti-tampering protection:
 
 ```bash
-dotnet run --project samples/OfdHWriter -- <out.ofd> [--work <work-dir>] [--no-sign]
+dotnet run --project samples/OfdHWriter -- <out.ofd> [--work <work-dir>] [--font <font-path>] [--no-sign] [--no-preview]
 ```
 
 Exit codes: `0` success with signature self-check passed / `1` invalid arguments /
 `2` generation error / `3` signature self-check failed.
 
 > See [OFD-H Electronic Medical Record support](#ofd-h-electronic-medical-record-support-gbt-48666-2026)
-> for the full clause mapping, the structured data API and the known limitations.
+> for the full clause mapping, the library API, the test coverage and the known limitations.
 
 ## Technical highlights
 
@@ -281,7 +326,7 @@ Exit codes: `0` success with signature self-check passed / `1` invalid arguments
 - **Editor architecture**: the ZIP is expanded into an in-memory map and the XML is edited directly; chaining is safe because object IDs increase monotonically
 - **Version management**: document-level snapshots (`Doc_0/V_N`) and historic version extraction
 - **Chinese national cryptography**: full SM2/SM3/SM4 coverage, with interoperability verified against both BouncyCastle and the system certificate store
-- **Robustness**: corrupt input yields semantically explicit exceptions or structured error results (900+ tests)
+- **Robustness**: corrupt input yields semantically explicit exceptions or structured error results (950+ tests)
 
 ## Technology mapping
 
@@ -308,6 +353,14 @@ This project uses a **dual license**:
 |---|---|---|
 | NetOfd's own code (e.g. `NetOfd.Emr` and other non-ported modules) | MIT License | [LICENSE](LICENSE) |
 | Code ported from OFDRW | Apache License 2.0 | [LICENSE-Apache-2.0](LICENSE-Apache-2.0) |
+
+Each NuGet package declares the matching `PackageLicenseExpression`:
+
+| Package | Declared |
+|---|---|
+| `NetOfd.Emr` | `MIT` |
+| `NetOfd.Core` / `Pkg` / `Font` / `Reader` / `Layout` / `Graphics2D` / `Converter` / `Sign` / `Crypto` / `Tool` / `Archive` | `Apache-2.0` |
+| `NetOfd` / `NetOfd.Full` (aggregate packages) | `Apache-2.0 OR MIT` |
 
 NetOfd is a .NET port of [OFDRW](https://github.com/ofdrw/ofdrw) (Copyright (c) 2020 Quan guanyu,
 Apache-2.0). Under Apache-2.0 §4, the ported portions retain the original license, state the

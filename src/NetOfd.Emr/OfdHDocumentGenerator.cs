@@ -6,7 +6,6 @@ using System.Xml;
 using System.Xml.Linq;
 using NetOfd.Core.Annotation.PageAnnot;
 using NetOfd.Core.BasicStructure.OFD;
-using NetOfd.Emr;
 using NetOfd.Font;
 using NetOfd.Layout;
 using NetOfd.Layout.Element;
@@ -18,60 +17,98 @@ using Org.BouncyCastle.X509;
 using SkiaSharp;
 using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
 
-namespace OfdHWriter;
+namespace NetOfd.Emr;
 
 /// <summary>
-/// GB/T 48666—2026《电子病历版式文档技术要求》合规电子病历 OFD 生成器。
+/// GB/T 48666—2026《电子病历版式文档技术要求》电子病历 OFD-H 版式文档生成器。
 /// <para>
-/// 用法: OfdHWriter &lt;out.ofd&gt; [--work &lt;工作目录&gt;] [--no-sign]
+/// 本类是库级 API，可直接被 NuGet 使用方调用：
+/// <code>
+/// var result = OfdHDocumentGenerator.Generate(new OfdHOptions
+/// {
+///     OutputPath = "病历.ofd",
+///     CaseData   = myCaseData,
+/// });
+/// </code>
+/// 命令行入口见 <c>samples/OfdHWriter</c>。
 /// </para>
-/// 生成流程与标准条款对照:
-///   6.1.2 单文档承载（Doc_0，OFD 格式）                     → OFDDoc 单文档
-///   6.1.3 ZIP 6.2 + Deflate、线性化（OFDEntries.xml 索引）   → RepackLinearized
-///   6.2   包内规范目录结构（表 1）                          → NormalizeStructure 规范化
-///   7.1a) DocType="OFD-H"                                   → OFDRoot.OfdDocType
-///   7.1c) 元数据 DocInfo（患者/责任者/时间/关键词）           → ConfigureDocInfo
-///   7.2b) 字型数据嵌入（仿宋 FontFile）                      → EmbedFonts
-///   7.2c) 图像资源嵌入（DocumentRes + Res/心电图 PNG）        → Img 元素
-///   7.3c) 结构化数据以自定义标引存储                         → AddCustomTag ×2
-///   7.4   附件（Attachs/Attachments.xml + Attach_N.png）     → OfdAttacher + 规范化
-///   7.5   机读信息（文件头/元数据/标识信息，UTF-8）            → CustomTag 机读信息 XML
-///   7.6   版本快照（历史版本全量保留）                        → OfdVersioner
-///   3.12/5.3.2e) 加注记录（审核批注）                        → OfdAnnotator
-///   6.3/8.c/d/e) SM2+SM3 国密签名（GB/T 35275），
-///                保护范围除注释列表、签名列表外全部内容        → OfdSigner + GBT35275DSContainer
-///   GM/T 0099 §7.4.3 防夹带/完整性保护                       → OfdIntegrity + GmProtectSigner
+/// <para>生成流程与标准条款对照：</para>
+/// <list type="bullet">
+///   <item>6.1.2 单文档承载（Doc_0，OFD 格式）                     → OFDDoc 单文档</item>
+///   <item>6.1.3 ZIP 6.2 + Deflate、线性化（OFDEntries.xml 索引）   → RepackLinearized</item>
+///   <item>6.2   包内规范目录结构（表 1）                          → NormalizeStructure 规范化</item>
+///   <item>7.1a) DocType="OFD-H"                                   → OFDRoot.OfdDocType</item>
+///   <item>7.1c) 元数据 DocInfo（患者/责任者/时间/关键词）           → ConfigureDocInfo</item>
+///   <item>7.2b) 字型数据嵌入（仿宋 FontFile）                      → EmbedFonts</item>
+///   <item>7.2c) 图像资源嵌入（DocumentRes + Res/心电图 PNG）        → Img 元素</item>
+///   <item>7.3c) 结构化数据以自定义标引存储                         → AddCustomTag ×2</item>
+///   <item>7.4   附件（Attachs/Attachments.xml + Attach_N.png）     → OfdAttacher + 规范化</item>
+///   <item>7.5   机读信息（文件头/元数据/标识信息，UTF-8）            → CustomTag 机读信息 XML</item>
+///   <item>7.6   版本快照（历史版本全量保留）                        → OfdVersioner</item>
+///   <item>3.12/5.3.2e) 加注记录（审核批注）                        → OfdAnnotator</item>
+///   <item>6.3/8.c/d/e) SM2+SM3 国密签名（GB/T 35275），
+///                保护范围除注释列表、签名列表外全部内容        → OfdSigner + GBT35275DSContainer</item>
+///   <item>GM/T 0099 §7.4.3 防夹带/完整性保护                       → OfdIntegrity + GmProtectSigner</item>
+/// </list>
 /// </summary>
-public static class EmrGenerator
+public static class OfdHDocumentGenerator
 {
     private const string OfdNs = "http://www.ofdspec.org/2016";
     private const string DocTypeOfdH = "OFD-H";
     private const string MachineReadableTypeId = "urn:emr:gb48666:machine-readable";
     private const string ClinicalDataTypeId = "urn:emr:gb48666:clinical-structured";
     private const string BodyFontFamily = "仿宋";
-    private const string FangSongPath = @"C:\Windows\Fonts\simfang.ttf";
-    /// <summary>固定演示文档标识（保证演示可复现；生产应使用 Guid.NewGuid）。</summary>
-    private const string DemoDocId = "d7a9c4e2b3f14a5c8d6e0f2a1b3c4d5e";
+
+    /// <summary>
+    /// 各平台下可嵌入文档的仿宋/中文字型候选路径（按顺序探测，取第一个存在的文件）。
+    /// <para>Windows 为「仿宋」simfang.ttf；Linux 常见为 wqy-zenhei / Noto Serif CJK；macOS 为 STFangsong。</para>
+    /// </summary>
+    private static readonly string[] FontCandidates =
+    {
+        @"C:\Windows\Fonts\simfang.ttf",
+        @"C:\Windows\Fonts\simsun.ttc",
+        "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
+        "/usr/share/fonts/opentype/noto/NotoSerifCJK-Regular.ttc",
+        "/usr/share/fonts/truetype/arphic/uming.ttc",
+        "/System/Library/Fonts/STHeiti Light.ttc",
+        "/System/Library/Fonts/Supplemental/Songti.ttc",
+    };
 
     /// <summary>生成一份 GB/T 48666—2026 合规的电子病历版式文档（OFD-H）。</summary>
-    /// <param name="outPath">输出 .ofd 文件路径（可为相对路径，内部转绝对路径）。</param>
-    /// <param name="workDir">中间产物工作目录；为 null 时取「输出目录/_emr_work」。</param>
-    /// <param name="noSign">true 时跳过国密签名与防夹带保护（仅用于调试结构）。</param>
-    /// <returns>0 = 成功且签名自检通过；3 = 签名自检失败；1 = 参数错误。</returns>
-    public static int Generate(string outPath, string? workDir = null, bool noSign = false)
+    /// <param name="options">生成参数，见 <see cref="OfdHOptions"/>。</param>
+    /// <returns>生成结果，含签名自检、完整性校验与包内条目清单。</returns>
+    public static OfdHResult Generate(OfdHOptions options)
     {
-        outPath = Path.GetFullPath(outPath);
-        workDir ??= Path.Combine(Path.GetDirectoryName(outPath)!, "_emr_work");
+        ArgumentNullException.ThrowIfNull(options);
+
+        var log = options.Log ?? Console.Out;
+        var outPath = Path.GetFullPath(options.OutputPath);
+        var workDir = options.WorkDirectory ?? Path.Combine(Path.GetDirectoryName(outPath)!, "_emr_work");
+        var noSign = options.SkipSignature;
         Directory.CreateDirectory(workDir);
         Directory.CreateDirectory(Path.GetDirectoryName(outPath)!);
 
-        var c = new EmrCase();
-        var now = DateTime.Now;
+        var c = options.CaseData ?? new EmrCaseData();
+        var now = options.SigningTime ?? DateTime.Now;
         var signTime = now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-        var uniqueId = "EMR-" + DemoDocId.Substring(0, 16).ToUpperInvariant();
-        Console.WriteLine($"═══ GB/T 48666—2026 电子病历版式文档（OFD-H）生成 ═══");
-        Console.WriteLine($"患者: {c.PatientName}（{c.Sex}，{c.Age} 岁）  病案号: {c.MedicalRecordNo}  科室: {c.Dept}");
-        Console.WriteLine($"唯一识别码: {uniqueId}");
+        var docId = options.DocumentId ?? Guid.NewGuid().ToString("N");
+        var uniqueId = "EMR-" + docId.Substring(0, Math.Min(16, docId.Length)).ToUpperInvariant();
+
+        // 字型解析（7.2b）：显式指定优先，否则按平台探测；找不到时按选项决定跳过或抛错
+        var (fontPath, fontWarning) = ResolveFont(options);
+        var fontEmbedded = false;
+        if (fontPath != null)
+        {
+            fontEmbedded = true;
+        }
+        else if (!options.SkipFontEmbeddingWhenMissing)
+        {
+            throw new FileNotFoundException(
+                "未找到可嵌入的中文字型文件；请通过 OfdHOptions.FontPath 指定，或安装仿宋/中文字体后重试。");
+        }
+        log.WriteLine($"═══ GB/T 48666—2026 电子病历版式文档（OFD-H）生成 ═══");
+        log.WriteLine($"患者: {c.PatientName}（{c.Sex}，{c.Age} 岁）  病案号: {c.MedicalRecordNo}  科室: {c.Dept}");
+        log.WriteLine($"唯一识别码: {uniqueId}");
 
         // ── 0. 合成心电图检查图像（页面内嵌资源 + 附件共用同一源文件）──────
         var ecgPath = Path.Combine(workDir, "心电图影像.png");
@@ -79,18 +116,25 @@ public static class EmrGenerator
 
         // ── 1. 基础文档（3 页：病案首页 / 入院记录 / 辅助检查与诊疗）──────────
         var stage1 = Path.Combine(workDir, "stage1_base.ofd");
-        BuildBaseDocument(stage1, c, signTime, uniqueId, DemoDocId, ecgPath);
+        BuildBaseDocument(stage1, c, signTime, uniqueId, docId, ecgPath);
         var ofd = File.ReadAllBytes(stage1);
-        Console.WriteLine($"[1/9] 基础文档完成（DocType={DocTypeOfdH}，3 页，元数据已写入 DocInfo）");
+        log.WriteLine($"[1/9] 基础文档完成（DocType={DocTypeOfdH}，3 页，元数据已写入 DocInfo）");
 
         // ── 2. 嵌入字型（7.2b：显示和打印所需全部字型数据包含在文件中）───────
-        ofd = EmbedFonts(ofd);
-        Console.WriteLine($"[2/9] 字型嵌入完成（{BodyFontFamily} → Doc_0/PublicRes.xml FontFile + Doc_0/Res/）");
+        if (fontPath != null)
+        {
+            ofd = EmbedFonts(ofd, fontPath, options.FontFamily);
+            log.WriteLine($"[2/9] 字型嵌入完成（{options.FontFamily} ← {Path.GetFileName(fontPath)} → Doc_0/PublicRes.xml FontFile + Doc_0/Res/）");
+        }
+        else
+        {
+            log.WriteLine($"[2/9] 已跳过字型嵌入（{fontWarning}）");
+        }
 
         // ── 3. 版本快照（7.6：保留历史版本全部内容）────────────────────────
         int versionIndex;
         ofd = OfdVersioner.AddVersion(ofd, "初稿（未加注、未附附件）", out versionIndex);
-        Console.WriteLine($"[3/9] 版本快照完成（V_{versionIndex} 初稿，全量保留于 Doc_0/V_{versionIndex}/）");
+        log.WriteLine($"[3/9] 版本快照完成（V_{versionIndex} 初稿，全量保留于 Doc_0/V_{versionIndex}/）");
 
         // ── 4. 自定义标引：WS/T 500 共享文档 + 机读信息（7.1d / 7.3c / 7.5）──
         //    7.3c 要求结构化数据「符合卫生行业现行标准，例如 WS/T 500 系列共享文档规范」，
@@ -100,35 +144,35 @@ public static class EmrGenerator
         ofd = OfdTagger.AddCustomTag(ofd, EmrStructuredExporter.Wst500TypeId,
             Wst500Builder.BuildBytes(structured));
         ofd = OfdTagger.AddCustomTag(ofd, MachineReadableTypeId,
-            BuildMachineReadableXml(c, signTime, uniqueId, DemoDocId));
-        Console.WriteLine("[4/9] 自定义标引完成（WS/T 500.32 共享文档 + 机读信息）");
+            BuildMachineReadableXml(c, signTime, uniqueId, docId));
+        log.WriteLine("[4/9] 自定义标引完成（WS/T 500.32 共享文档 + 机读信息）");
 
         // ── 5. 内部附件：心电图影像（7.4a/b，非文书类资料）──────────────────
         ofd = OfdAttacher.AddAttachment(ofd,
             new Attachment("心电图影像.png", ecgPath).SetFormat("PNG").SetVisible(true));
-        Console.WriteLine("[5/9] 内部附件添加完成（心电图影像.png）");
+        log.WriteLine("[5/9] 内部附件添加完成（心电图影像.png）");
 
         // ── 6. 加注记录：质控审核批注（3.12 / 5.3.2e / 6.3f）────────────────
         ofd = OfdAnnotator.AddAnnotation(ofd, 1, BuildAuditAnnotation());
-        Console.WriteLine("[6/9] 加注记录完成（第 1 页『已审核』质控批注）");
+        log.WriteLine("[6/9] 加注记录完成（第 1 页『已审核』质控批注）");
 
         // ── 7. 目录结构规范化（对齐 6.2 表 1）──────────────────────────────
         ofd = NormalizeStructure(ofd);
-        Console.WriteLine("[7/9] 目录结构规范化完成（Tags/CustomTag_N.xml、Attachs/Attach_N.png、注释绝对路径）");
+        log.WriteLine("[7/9] 目录结构规范化完成（Tags/CustomTag_N.xml、Attachs/Attach_N.png、注释绝对路径）");
 
         byte[] finalOfd;
         if (noSign)
         {
             finalOfd = ofd;
-            Console.WriteLine("[8/9] 已跳过签名（--no-sign）");
-            Console.WriteLine("[9/9] 已跳过防夹带保护（--no-sign）");
+            log.WriteLine("[8/9] 已跳过签名（--no-sign）");
+            log.WriteLine("[9/9] 已跳过防夹带保护（--no-sign）");
         }
         else
         {
             // ── 8. SM2+SM3 国密数字签名（GB/T 35275；6.3 / 8.c/d/e）─────────
             // 8.c)：保护范围涵盖除「注释列表、签名列表」外的全部内容
             var keyPair = GmCrypto.GenerateSm2KeyPair();
-            var cert = CertUtil.GenerateSelfSignedSm2("xx市第三人民医院 病案室（演示签章者）", keyPair);
+            var cert = CertUtil.GenerateSelfSignedSm2(options.SignerName, keyPair);
             var container = new GBT35275DSContainer(cert, keyPair);
             finalOfd = OfdSigner.Sign(ofd, container, signTime,
                 signMode: SignMode.WholeProtected,
@@ -143,7 +187,7 @@ public static class EmrGenerator
                     if (n.EndsWith("/signedvalue.dat", StringComparison.OrdinalIgnoreCase)) return false;
                     return true;
                 });
-            Console.WriteLine("[8/9] 国密签名完成（SM2withSM3，GB/T 35275 SignedData 封装）");
+            log.WriteLine("[8/9] 国密签名完成（SM2withSM3，GB/T 35275 SignedData 封装）");
 
             // ── 9. 防夹带 / 完整性保护（GM/T 0099 §7.4.3，OFDEntries.xml）───
             var integritySigner = new NetOfd.Crypto.Integrity.GmProtectSigner(keyPair.Private, cert);
@@ -151,7 +195,7 @@ public static class EmrGenerator
             // OFDEntries.xml 归一为 ofd: 前缀形式后重签完整性签名值
             // （signedvalue.dat 不计入 EMR 签名保护范围，重签不破坏电子病历数字签名）
             finalOfd = NormalizeIntegrityFile(finalOfd, integritySigner);
-            Console.WriteLine("[9/9] 防夹带保护完成（OFDEntries.xml + signedvalue.dat，SM2/SM3，ofd: 前缀规范）");
+            log.WriteLine("[9/9] 防夹带保护完成（OFDEntries.xml + signedvalue.dat，SM2/SM3，ofd: 前缀规范）");
         }
 
         // ── 线性化重排（6.1.3：索引置首、内容先行、资源随后）────────────────
@@ -159,64 +203,74 @@ public static class EmrGenerator
 
         File.WriteAllBytes(outPath, finalOfd);
         var sizeMb = finalOfd.Length / 1024d / 1024d;
-        Console.WriteLine();
-        Console.WriteLine($"✔ 已生成: {outPath}（{sizeMb:F2} MB，{CountPages(finalOfd)} 页）");
+        log.WriteLine();
+        log.WriteLine($"✔ 已生成: {outPath}（{sizeMb:F2} MB，{CountPages(finalOfd)} 页）");
 
         // ── 自检：签名验证 + 附件可读性 ────────────────────────────────────
         var verify = OfdValidator.Verify(finalOfd);
-        Console.WriteLine();
-        Console.WriteLine($"── 签名自检 ──");
-        Console.WriteLine($"AllValid={verify.AllValid}  签名数={verify.SignatureCount}");
+        log.WriteLine();
+        log.WriteLine($"── 签名自检 ──");
+        log.WriteLine($"AllValid={verify.AllValid}  签名数={verify.SignatureCount}");
         foreach (var s in verify.Signatures)
         {
-            Console.WriteLine($"  签名[{s.SignId}] 类型={s.Type} 有效={s.Valid} 保护文件数={s.ReferenceCount} 杂凑不符={s.ReferenceMismatch}");
-            Console.WriteLine($"    签章人={s.CertSubject}  签章时间={s.SignTime:yyyy-MM-dd HH:mm:ss}");
-            if (s.Error != null) Console.WriteLine($"    错误={s.Error}");
+            log.WriteLine($"  签名[{s.SignId}] 类型={s.Type} 有效={s.Valid} 保护文件数={s.ReferenceCount} 杂凑不符={s.ReferenceMismatch}");
+            log.WriteLine($"    签章人={s.CertSubject}  签章时间={s.SignTime:yyyy-MM-dd HH:mm:ss}");
+            if (s.Error != null) log.WriteLine($"    错误={s.Error}");
         }
-        if (verify.Error != null) Console.WriteLine($"  错误={verify.Error}");
+        if (verify.Error != null) log.WriteLine($"  错误={verify.Error}");
 
+        var integrityOk = false;
         if (!noSign)
         {
-            var integrityOk = new NetOfd.Crypto.Integrity.OfdIntegrityVerifier()
+            integrityOk = new NetOfd.Crypto.Integrity.OfdIntegrityVerifier()
                 .Integrity(finalOfd, new NetOfd.Crypto.Integrity.GmProtectVerifier());
-            Console.WriteLine($"  防夹带/完整性（OFDEntries.xml + signedvalue.dat，含夹带文件检查）: {(integrityOk ? "通过" : "失败")}");
+            log.WriteLine($"  防夹带/完整性（OFDEntries.xml + signedvalue.dat，含夹带文件检查）: {(integrityOk ? "通过" : "失败")}");
         }
 
         using (var reader = new NetOfd.Reader.OFDReader(new MemoryStream(finalOfd)))
         {
             var att = reader.GetAttachmentFile("心电图影像.png");
-            Console.WriteLine();
-            Console.WriteLine("── 回读自检 ──");
-            Console.WriteLine($"  页数: {reader.GetPages().Count()}");
-            Console.WriteLine($"  附件『心电图影像.png』: {(att is null ? "读取失败" : $"{att.Length} 字节，与源文件一致={att.SequenceEqual(File.ReadAllBytes(ecgPath))}")}");
+            log.WriteLine();
+            log.WriteLine("── 回读自检 ──");
+            log.WriteLine($"  页数: {reader.GetPages().Count()}");
+            log.WriteLine($"  附件『心电图影像.png』: {(att is null ? "读取失败" : $"{att.Length} 字节，与源文件一致={att.SequenceEqual(File.ReadAllBytes(ecgPath))}")}");
             var tags = reader.GetOfd().GetFirstDocBody()?.DocInfo;
-            Console.WriteLine($"  DocType: {reader.GetOfd().OfdDocType}  DocID: {tags?.DocID}");
-        }
-
-        // ── 渲染预览图 ─────────────────────────────────────────────────────
-        var previewDir = Path.Combine(Path.GetDirectoryName(outPath)!, "preview");
-        Directory.CreateDirectory(previewDir);
-        using (var exporter = new NetOfd.Converter.ImageExporter(outPath, previewDir, "png", 12))
-        {
-            var pages = exporter.Export();
-            Console.WriteLine();
-            Console.WriteLine($"── 渲染预览（{pages.Count} 页）→ {previewDir}");
+            log.WriteLine($"  DocType: {reader.GetOfd().OfdDocType}  DocID: {tags?.DocID}");
         }
 
         // ── 包内条目清单 ───────────────────────────────────────────────────
-        Console.WriteLine();
-        Console.WriteLine("── 包内条目（对照 GB/T 48666—2026 表 1）──");
-        foreach (var (name, len) in ListEntries(finalOfd))
-            Console.WriteLine($"  {len,10} B  {name}");
+        var entries = ListEntries(finalOfd);
+        log.WriteLine();
+        log.WriteLine("── 包内条目（对照 GB/T 48666—2026 表 1）──");
+        foreach (var (name, len) in entries)
+            log.WriteLine($"  {len,10} B  {name}");
 
-        return verify.AllValid || noSign ? 0 : 3;
+        var success = verify.AllValid || noSign;
+        return new OfdHResult
+        {
+            Success = success,
+            OutputPath = outPath,
+            OfdBytes = finalOfd,
+            PageCount = CountPages(finalOfd),
+            SizeBytes = finalOfd.LongLength,
+            UniqueId = uniqueId,
+            DocumentId = docId,
+            SignatureCount = verify.SignatureCount,
+            AllSignaturesValid = verify.AllValid,
+            IntegrityVerified = integrityOk,
+            VersionIndex = versionIndex,
+            FontEmbedded = fontEmbedded,
+            FontWarning = fontWarning,
+            PackageEntries = entries,
+            Error = success ? null : (verify.Error ?? "签名自检未通过"),
+        };
     }
 
     // ═════════════════════════════════════════════════════════════════════
     //  1. 基础文档
     // ═════════════════════════════════════════════════════════════════════
 
-    private static void BuildBaseDocument(string outPath, EmrCase c, string signTime, string uniqueId, string docId, string ecgImagePath)
+    private static void BuildBaseDocument(string outPath, EmrCaseData c, string signTime, string uniqueId, string docId, string ecgImagePath)
     {
         if (File.Exists(outPath)) File.Delete(outPath);
         using var doc = new OFDDoc(outPath);
@@ -284,7 +338,7 @@ public static class EmrGenerator
     }
 
     /// <summary>OFD.xml 根节点 DocType=OFD-H + DocInfo 元数据（7.1a / 7.1c / 7.3a / 7.3b）。</summary>
-    private static void ConfigureDocInfo(OFDDoc doc, EmrCase c, string signTime, string uniqueId, string docId)
+    private static void ConfigureDocInfo(OFDDoc doc, EmrCaseData c, string signTime, string uniqueId, string docId)
     {
         var ofdRoot = doc.GetOfdDir().ObtainOfd();
         ofdRoot.OfdDocType = DocTypeOfdH;                       // GB/T 48666-2026 7.1 a)
@@ -317,7 +371,7 @@ public static class EmrGenerator
     //  2. 字型嵌入（7.2b）
     // ═════════════════════════════════════════════════════════════════════
 
-    private static byte[] EmbedFonts(byte[] ofd)
+    private static byte[] EmbedFonts(byte[] ofd, string fontPath, string fontFamily)
     {
         var map = ReadZip(ofd);
         var ofdNs = XNamespace.Get(OfdNs);
@@ -327,13 +381,37 @@ public static class EmrGenerator
         var docDir = ParentDir(resKey);
 
         var font = doc.Descendants(ofdNs + "Font")
-            .FirstOrDefault(f => (string?)f.Attribute("FontName") == BodyFontFamily);
-        if (font == null) throw new InvalidOperationException($"PublicRes.xml 中未找到字体「{BodyFontFamily}」");
+            .FirstOrDefault(f => (string?)f.Attribute("FontName") == fontFamily);
+        if (font == null) throw new InvalidOperationException($"PublicRes.xml 中未找到字体「{fontFamily}」");
         font.Element(ofdNs + "FontFile")?.Remove();
         font.Add(new XElement(ofdNs + "FontFile", "Res/Font_FangSong.ttf"));   // 相对 PublicRes.xml
         map[resKey] = ToUtf8Bytes(doc, indent: false);
-        map[$"{docDir}/Res/Font_FangSong.ttf"] = File.ReadAllBytes(FangSongPath);
+        map[$"{docDir}/Res/Font_FangSong.ttf"] = File.ReadAllBytes(fontPath);
         return WriteZip(map);
+    }
+
+    /// <summary>
+    /// 解析可嵌入的字型文件路径：显式指定优先，否则按平台探测候选路径。
+    /// </summary>
+    /// <returns>(字型路径, 警告信息)；路径为 null 表示未找到可用字型。</returns>
+    private static (string? Path, string? Warning) ResolveFont(OfdHOptions options)
+    {
+        if (!string.IsNullOrWhiteSpace(options.FontPath))
+        {
+            if (File.Exists(options.FontPath))
+                return (Path.GetFullPath(options.FontPath), null);
+            return (null, $"指定的字型文件不存在：{options.FontPath}");
+        }
+
+        foreach (var candidate in FontCandidates)
+        {
+            if (File.Exists(candidate))
+                return (candidate, null);
+        }
+
+        return (null,
+            "未在本机找到可嵌入的中文字型（已尝试 " + FontCandidates.Length +
+            " 个候选路径）；字型数据未嵌入文档，不满足 GB/T 48666—2026 第 7.2 b 条");
     }
 
     // ═════════════════════════════════════════════════════════════════════
@@ -345,7 +423,7 @@ public static class EmrGenerator
     /// 含文件头（版本号/创建时间/修改时间）、元数据（文档属性/创作者/关键字）、
     /// 标识信息（文件类型/秘密等级/唯一识别码）。
     /// </summary>
-    private static byte[] BuildMachineReadableXml(EmrCase c, string signTime, string uniqueId, string docId)
+    private static byte[] BuildMachineReadableXml(EmrCaseData c, string signTime, string uniqueId, string docId)
     {
         var ns = XNamespace.Get("urn:emr:machine-readable:2026");
         var doc = new XDocument(new XElement(ns + "EMRDocument",
@@ -387,11 +465,11 @@ public static class EmrGenerator
     /// <summary>
     /// 构造标准结构化数据模型（WS/T 500.32—2016 住院病案首页共享文档 + WS 445.10 数据元）。
     /// <para>
-    /// 字段值与版式页面内容同源（同一 <see cref="EmrCase"/>），保证「人读」与「机读」一致；
+    /// 字段值与版式页面内容同源（同一 <see cref="EmrCaseData"/>），保证「人读」与「机读」一致；
     /// 编码体系对齐：诊断 ICD-10、手术 ICD-9-CM-3、科室/病案号 WS 445 数据元码。
     /// </para>
     /// </summary>
-    private static EmrStructuredData BuildStructuredData(EmrCase c, string signTime, string uniqueId)
+    private static EmrStructuredData BuildStructuredData(EmrCaseData c, string signTime, string uniqueId)
     {
         var data = new EmrStructuredData
         {

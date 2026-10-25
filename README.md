@@ -20,9 +20,9 @@ NetOfd 是 [OFDRW (OFD Reader & Writer)](https://github.com/ofdrw/ofdrw) v2.3.8 
 
 ## OFD-H 电子病历支持（GB/T 48666—2026）
 
-`NetOfd.Emr` 模块 + `samples/OfdHWriter` / `samples/OfdHExporter` 两个命令行工具，
-提供了 **GB/T 48666—2026《电子病历版式文档技术要求》** 的落地能力：
-生成符合 OFD-H 要求的版式文档，并在其中嵌入机读的结构化诊疗数据。
+`NetOfd.Emr` 模块提供 **GB/T 48666—2026《电子病历版式文档技术要求》** 的落地能力：
+作为库 API 生成符合 OFD-H 要求的版式文档，并在其中嵌入机读的结构化诊疗数据。
+`samples/OfdHWriter` / `samples/OfdHExporter` 两个命令行工具是其封装。
 
 ### 覆盖的标准体系
 
@@ -41,7 +41,7 @@ ISO 3166-1（国籍）、ICD-10（疾病分类）、ICD-9-CM-3（手术操作）
 
 ### 条款实现对照
 
-`samples/OfdHWriter/EmrGenerator.cs` 顶部注释逐条记录了生成流程与标准条款的对应关系：
+`src/NetOfd.Emr/OfdHDocumentGenerator.cs` 顶部注释逐条记录了生成流程与标准条款的对应关系：
 
 | 条款 | 要求 | 实现 |
 |---|---|---|
@@ -60,10 +60,26 @@ ISO 3166-1（国籍）、ICD-10（疾病分类）、ICD-9-CM-3（手术操作）
 | 6.3 / 8 c) d) e) | SM2 + SM3 国密签名，保护范围除注释列表、签名列表外全部内容 | `OfdSigner` + `GBT35275DSContainer` |
 | GM/T 0099 §7.4.3 | 防夹带 / 完整性保护 | `OfdIntegrity` + `GmProtectSigner` |
 
-### 生成器：samples/OfdHWriter
+### 生成器：NetOfd.Emr.OfdHDocumentGenerator
 
-```bash
-dotnet run --project samples/OfdHWriter -- <out.ofd> [--work <工作目录>] [--no-sign]
+```csharp
+using NetOfd.Emr;
+
+var result = OfdHDocumentGenerator.Generate(new OfdHOptions
+{
+    OutputPath = "病历.ofd",
+    CaseData   = myCaseData,          // 传入 EmrCaseData；为 null 时使用内置演示数据
+    // FontPath = "/path/to/chinese.ttf",   // 不指定则按平台自动探测中文字型
+});
+
+if (!result.Success)
+{
+    Console.Error.WriteLine(result.Error);
+    return;
+}
+
+Console.WriteLine($"{result.PageCount} 页 / {result.SizeBytes} 字节 / 签名 {result.SignatureCount} 个");
+Console.WriteLine($"验签全部通过: {result.AllSignaturesValid}，完整性: {result.IntegrityVerified}");
 ```
 
 产出一份 **3 页 A4 纵向**（边距 20mm）OFD-H 版式文档：
@@ -74,16 +90,37 @@ dotnet run --project samples/OfdHWriter -- <out.ofd> [--work <工作目录>] [--
 | 2 | 入院记录（一般项目、主诉、现病史、既往史、个人史 + 家族史、体格检查） |
 | 3 | 辅助检查（心电图文字 + 图像 + 图注）、初步诊断与诊疗计划、医师签名、日期 |
 
-文档同时包含：嵌入仿宋字型、心电图图像资源、内部附件、质控审核加注、版本快照、
+文档同时包含：嵌入中文字型、心电图图像资源、内部附件、质控审核加注、版本快照、
 机读信息标引 + WS/T 500 共享文档标引、SM2withSM3 国密签名、GM/T 0099 防夹带保护。
 
+`OfdHOptions` 常用参数：
+
+| 参数 | 默认值 | 说明 |
+|---|---|---|
+| `OutputPath` | 必填 | 输出 .ofd 路径 |
+| `CaseData` | 内置演示数据 | 病历数据（`EmrCaseData`） |
+| `SkipSignature` | `false` | 跳过签名与防夹带（仅调试结构用） |
+| `DocumentId` | 自动生成 GUID | 文档标识 DocID；传入固定值可获得可复现输出 |
+| `FontPath` | 按平台自动探测 | 待嵌入的中文字型文件 |
+| `SkipFontEmbeddingWhenMissing` | `true` | 找不到字型时记录警告并跳过（设为 `false` 则抛异常） |
+| `SigningTime` | 当前时间 | 签名时间 |
+| `Log` | `Console.Out` | 日志输出目标 |
+
+### 命令行封装
+
+```bash
+dotnet run --project samples/OfdHWriter -- <out.ofd> [--work <工作目录>] [--font <字型路径>] [--no-sign] [--no-preview]
+```
+
 退出码：`0` 成功且签名自检通过 / `1` 参数错误 / `2` 生成异常 / `3` 签名自检失败。
-`--no-sign` 跳过签名与防夹带（仅用于调试结构）。
 
 ### 结构化数据：NetOfd.Emr 模块
 
 | 类 | 职责 |
 |---|---|
+| `OfdHDocumentGenerator` | OFD-H 版式文档生成器（本节上文） |
+| `OfdHOptions` / `OfdHResult` | 生成参数与结果对象 |
+| `EmrCaseData` | 病历数据模型（患者、就诊、诊断、医嘱等） |
 | `EmrStructuredData` | 版式页面与机读数据的桥梁：同一份字段既渲染进 OFD-H 版式，又以标准 DE 码写入结构化标引 |
 | `Wst500Builder` | 把 `EmrStructuredData` 序列化为 WS/T 500.32 共享文档（HL7 CDA R2 `ClinicalDocument`） |
 | `Wst500Codes` | 编码常量字典：13 个章节 LOINC 码、56 个数据元 DE 码、11 个 OID 根、11 个值域代码 |
@@ -125,6 +162,16 @@ dotnet run --project samples/OfdHExporter -- <in.ofd> [--out <输出目录>] [--
 
 退出码：`0` 成功 / `1` 参数错误或输入不存在 / `2` 导出异常 / `3` 未找到结构化数据标引。
 
+### 测试覆盖
+
+OFD-H 相关自动化测试位于 `tests/NetOfd.Tests/Emr/`：
+
+| 测试类 | 用例数 | 覆盖内容 |
+|---|---|---|
+| `OfdHDocumentGeneratorTest` | 18 | 生成全流程端到端：3 页结构、DocType、DocID、包内目录结构（表 1）、线性化顺序、字型嵌入、版本快照、自定义标引 ×2、机读信息三要素、结构化数据反向导出、CDA 结构、附件字节一致、加注、签名验签、防夹带完整性、三页文本提取 |
+| `OfdHGeneratorOptionTest` | 5 | 跳过签名、不存在字型路径（跳过 / 抛异常两种策略）、自定义病历数据、自动 DocID |
+| `Wst500SharedDocumentTest` | 12 | WS/T 500.32 共享文档常量自洽性、CDA 结构约束、标引写入读回闭环 |
+
 ### 已知边界
 
 诚实列出当前实现的局限，便于评估可用范围：
@@ -133,9 +180,7 @@ dotnet run --project samples/OfdHExporter -- <in.ofd> [--out <输出目录>] [--
 - **数据元覆盖 33/56**：56 个 DE 码常量中约 23 个尚未写入共享文档（用药、血型、出生体重、尸检标志、病理号、外因等）。
 - **部分字段只入版式、不入机读**：`EmrStructuredData` 中的就诊类字段（年龄、住院次数、入出院时间、入院途径、入出院科室、病区、付费方式、责任护士、编码医师等）目前仅出现在版式页面，未进入结构化标引。
 - **仅覆盖 1 个共享文档 part**：当前只实现 WS/T 500.32（住院病案首页），WS/T 500 系列其余 part 未涉及。
-- **生成器无端到端自动化测试**：`OfdHWriter` 的 3 页结构、字型嵌入、签名、防夹带、线性化目前靠人工验证；结构化部分有 12 个专项单元测试（含 XML → 标引 → 导出闭环）。
-- **字型嵌入为 Windows 专用路径**：仿宋取自 `C:\Windows\Fonts\simfang.ttf`，Linux / macOS 下需自行提供字体。
-- **演示文档 ID 固定**：为保证演示可复现，`OfdHWriter` 使用固定 `DocID`；生产环境应改用 `Guid.NewGuid()`。
+- **字型嵌入依赖系统中文字体**：未显式指定 `FontPath` 时按平台探测仿宋/中文字体；探不到时按选项记录警告并跳过（此时不满足第 7.2 b 条），生产环境应显式提供字型文件。
 
 ## 项目结构
 
@@ -143,7 +188,7 @@ dotnet run --project samples/OfdHExporter -- <in.ofd> [--out <输出目录>] [--
 netofd/
 ├── src/
 │   ├── NetOfd.Core/          # 核心：OFD XML 元素体系 + 基础类型（ST_*/CT_*）
-│   ├── NetOfd.Emr/           # 电子病历结构化数据（WS/T 500 共享文档生成 + 标准导出）
+│   ├── NetOfd.Emr/           # OFD-H 电子病历（GB/T 48666—2026）：版式文档生成 + WS/T 500 共享文档 + 标准导出
 │   ├── NetOfd.Pkg/           # 虚拟容器 + ZIP 打包
 │   ├── NetOfd.Font/          # 字体管理与度量
 │   ├── NetOfd.Reader/        # OFD 解析器 / 文本提取 / 关键词定位
@@ -157,7 +202,7 @@ netofd/
 │   ├── NetOfd.Full/          # 全模块聚合
 │   └── NetOfd/               # 统一入口（元包）
 ├── tests/
-│   └── NetOfd.Tests/         # 900+ 单元/集成/性能测试
+│   └── NetOfd.Tests/         # 950+ 单元/集成/性能测试
 ├── samples/                  # 示例项目（写入/签名/渲染转换/OFD-H 生成/结构化导出）
 │   └── OfdHWriter/           # GB/T 48666—2026 电子病历 OFD-H 生成器
 └── Directory.Build.props     # 统一构建属性
@@ -251,17 +296,17 @@ dotnet run --project tests/NetOfd.TestConsole -- ofda-convert <in.ofd> <out.ofd>
 
 ### 生成 OFD-H 电子病历版式文档
 
-`samples/OfdHWriter` 是独立的 OFD-H 生成器（GB/T 48666—2026），输出含 3 页版式内容、
-嵌入仿宋字型、心电图附件、质控审核加注、版本快照、自定义标引（机读信息 + 结构化诊疗数据）、
+`samples/OfdHWriter` 是 `NetOfd.Emr.OfdHDocumentGenerator` 的命令行封装，输出含 3 页版式内容、
+嵌入中文字型、心电图附件、质控审核加注、版本快照、自定义标引（机读信息 + 结构化诊疗数据）、
 SM2withSM3 国密签名与 GM/T 0099 防夹带保护：
 
 ```bash
-dotnet run --project samples/OfdHWriter -- <out.ofd> [--work <工作目录>] [--no-sign]
+dotnet run --project samples/OfdHWriter -- <out.ofd> [--work <工作目录>] [--font <字型路径>] [--no-sign] [--no-preview]
 ```
 
 退出码：`0` 成功且签名自检通过 / `1` 参数错误 / `2` 生成异常 / `3` 签名自检失败。
 
-> 完整条款对照、结构化数据 API 与已知边界见 [OFD-H 电子病历支持](#ofd-h-电子病历支持gbt-486662026)。
+> 完整条款对照、库 API、结构化数据与测试覆盖见 [OFD-H 电子病历支持](#ofd-h-电子病历支持gbt-486662026)。
 
 ## 技术特性
 
@@ -269,7 +314,7 @@ dotnet run --project samples/OfdHWriter -- <out.ofd> [--work <工作目录>] [--
 - **编辑器架构**: zip 展开为内存映射 + XML 直改，链式调用安全（对象 ID 单调递增）
 - **版本管理**: 文档级快照（Doc_0/V_N）与历史版本提取
 - **国密**: SM2/SM3/SM4 全覆盖，兼容 BouncyCastle 与系统密码库互操作验证
-- **健壮性**: 损坏输入有语义明确的异常或结构化错误结果（900+ 测试保障）
+- **健壮性**: 损坏输入有语义明确的异常或结构化错误结果（950+ 测试保障）
 
 ## 技术栈映射
 
@@ -296,6 +341,14 @@ dotnet run --project samples/OfdHWriter -- <out.ofd> [--work <工作目录>] [--
 |---|---|---|
 | NetOfd 自有代码（如 `NetOfd.Emr` 等非移植模块） | MIT License | [LICENSE](LICENSE) |
 | 自 OFDRW 移植而来的代码 | Apache License 2.0 | [LICENSE-Apache-2.0](LICENSE-Apache-2.0) |
+
+各 NuGet 包的 `PackageLicenseExpression` 与此保持一致：
+
+| 包 | 声明 |
+|---|---|
+| `NetOfd.Emr` | `MIT` |
+| `NetOfd.Core` / `Pkg` / `Font` / `Reader` / `Layout` / `Graphics2D` / `Converter` / `Sign` / `Crypto` / `Tool` / `Archive` | `Apache-2.0` |
+| `NetOfd` / `NetOfd.Full`（聚合包） | `Apache-2.0 OR MIT` |
 
 NetOfd 是 [OFDRW](https://github.com/ofdrw/ofdrw)（Copyright (c) 2020 Quan guanyu，Apache-2.0）
 的 .NET 移植版本。根据 Apache-2.0 §4，移植而来的部分保留原协议、声明修改并保留版权声明，

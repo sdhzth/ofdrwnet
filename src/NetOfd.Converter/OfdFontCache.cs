@@ -13,9 +13,9 @@ namespace NetOfd.Converter;
 /// <para>
 /// <b>字体解析策略（2026-10-23 修复）</b>：
 /// <list type="bullet">
-/// <item>不能用 <see cref="SKTypeface.FromFamilyName"/> 做可用性判断——字体族不存在时它返回
+/// <item>不能用 <see cref="SKTypeface.FromFamilyName(string)"/> 做可用性判断——字体族不存在时它返回
 /// <see cref="SKTypeface.Default"/>（非 null），会把「请求楷体却拿到默认字体（中文方块）」误判为命中，
-/// 导致后续中文字体兜底候选永远走不到。改用 <see cref="SKFontManager.MatchFamily"/> 精确匹配（找不到返回 null）。</item>
+/// 导致后续中文字体兜底候选永远走不到。改用 <see cref="SKFontManager.MatchFamily(string)"/> 精确匹配（找不到返回 null）。</item>
 /// <item>国内 OFD（GB/T 33190）大量使用 GB2312 字体内码名（<c>KaiTi_GB2312</c>/<c>SimHei</c>/<c>FangSong</c> 等），
 /// 与 Windows 家族名（楷体/黑体/仿宋）不同名，需经别名表映射后再匹配。</item>
 /// <item>最终兜底链：SimSun → 宋体 → Microsoft YaHei → 微软雅黑 → Default。</item>
