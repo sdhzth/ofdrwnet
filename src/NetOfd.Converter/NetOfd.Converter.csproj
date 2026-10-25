@@ -3,6 +3,12 @@
     <AssemblyName>NetOfd.Converter</AssemblyName>
     <RootNamespace>NetOfd.Converter</RootNamespace>
     <Description>NetOfd Converter - 将 OFD 文档渲染为 PNG 图像（参考 ofdrw-converter 的 ImageExporter/ImageMaker）</Description>
+    <!--
+      NU5104：稳定版包不应依赖预发布版依赖项。
+      PdfPig 在 nuget.org 上唯一可用的公开版本即 1.7.0-custom-5（SemVer 预发布号），
+      无稳定版可替换，故在此显式抑制该警告；依赖本身可正常还原。
+    -->
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="SkiaSharp" />
