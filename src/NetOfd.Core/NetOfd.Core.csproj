@@ -3,7 +3,6 @@
     <AssemblyName>NetOfd.Core</AssemblyName>
     <RootNamespace>NetOfd.Core</RootNamespace>
     <PackageId>NetOfd.Core</PackageId>
-    <Version>1.2.0</Version>
     <Description>NetOfd Core - OFD basic types, XML element model, and document structure</Description>
   </PropertyGroup>
 </Project>
