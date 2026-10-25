@@ -10,6 +10,11 @@ The ported portions of this software are governed by the Apache License,
 Version 2.0 (see LICENSE-Apache-2.0). All modifications made in the course
 of porting are the work of the NetOfd authors.
 
+Note on the root LICENSE file: that file contains the MIT License, which governs
+NetOfd's own code. The MIT License does not apply to the ported portions —
+those remain under the Apache License, Version 2.0 as set out above and in
+LICENSE-Apache-2.0, as required by Apache-2.0 §4.
+
 The following OFDRW modules were ported (OFDRW v2.3.8):
 
   ofdrw-core        -> NetOfd.Core

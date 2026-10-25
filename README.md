@@ -301,4 +301,7 @@ NetOfd 是 [OFDRW](https://github.com/ofdrw/ofdrw)（Copyright (c) 2020 Quan gua
 的 .NET 移植版本。根据 Apache-2.0 §4，移植而来的部分保留原协议、声明修改并保留版权声明，
 详见 [NOTICE](NOTICE)。
 
+> 根目录 `LICENSE` 为 MIT 协议标准原文（便于 GitHub 自动识别协议标签），
+> 上述协议适用范围划分以 `NOTICE` 与本表为准。
+
 本项目是独立实现，与 OFDRW 项目无隶属或背书关系。

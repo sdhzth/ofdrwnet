@@ -313,5 +313,8 @@ NetOfd is a .NET port of [OFDRW](https://github.com/ofdrw/ofdrw) (Copyright (c) 
 Apache-2.0). Under Apache-2.0 §4, the ported portions retain the original license, state the
 changes made and keep the upstream copyright notice — see [NOTICE](NOTICE).
 
+> The root `LICENSE` file contains the verbatim MIT License text (so that GitHub can auto-detect
+> the license). The scope split above is defined by `NOTICE` and by the table above.
+
 This project is an independent implementation and is not affiliated with or endorsed by the
 OFDRW project.
