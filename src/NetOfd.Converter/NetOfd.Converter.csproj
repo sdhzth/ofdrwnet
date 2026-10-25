@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>NetOfd.Converter</AssemblyName>
+    <RootNamespace>NetOfd.Converter</RootNamespace>
+    <Description>NetOfd Converter - 将 OFD 文档渲染为 PNG 图像（参考 ofdrw-converter 的 ImageExporter/ImageMaker）</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="UglyToad.PdfPig" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NetOfd.Core\NetOfd.Core.csproj" />
+    <ProjectReference Include="..\NetOfd.Reader\NetOfd.Reader.csproj" />
+    <ProjectReference Include="..\NetOfd.Pkg\NetOfd.Pkg.csproj" />
+    <ProjectReference Include="..\NetOfd.Layout\NetOfd.Layout.csproj" />
+    <ProjectReference Include="..\NetOfd.Graphics2D\NetOfd.Graphics2D.csproj" />
+  </ItemGroup>
+</Project>

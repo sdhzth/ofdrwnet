@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>NetOfd.Font</AssemblyName>
+    <RootNamespace>NetOfd.Font</RootNamespace>
+    <PackageId>NetOfd.Font</PackageId>
+    <Description>NetOfd Font - Font management and metrics for OFD documents</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
+    <PackageReference Include="SkiaSharp.NativeAssets.macOS" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NetOfd.Core\NetOfd.Core.csproj" />
+  </ItemGroup>
+</Project>

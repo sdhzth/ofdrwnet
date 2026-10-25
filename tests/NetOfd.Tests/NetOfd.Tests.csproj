@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>NetOfd.Tests</AssemblyName>
+    <RootNamespace>NetOfd.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="coverlet.collector" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\sample.ofd" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Resources\dotnet_sample.ofd" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Resources\SESV4SignDoc.ofd" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Resources\UserV4.esl" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Resources\SESealData.DER" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Resources\hello-integrity.ofd" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Resources\sign_cert.pem" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Resources\sign_key.pem" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Resources\areaholder_fields.ofd" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Resources\pdf_real_ofdrw_test3.pdf" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\NetOfd\NetOfd.csproj" />
+    <ProjectReference Include="..\..\src\NetOfd.Core\NetOfd.Core.csproj" />
+    <ProjectReference Include="..\..\src\NetOfd.Emr\NetOfd.Emr.csproj" />
+    <ProjectReference Include="..\..\src\NetOfd.Pkg\NetOfd.Pkg.csproj" />
+    <ProjectReference Include="..\..\src\NetOfd.Reader\NetOfd.Reader.csproj" />
+    <ProjectReference Include="..\..\src\NetOfd.Converter\NetOfd.Converter.csproj" />
+    <ProjectReference Include="..\..\src\NetOfd.Layout\NetOfd.Layout.csproj" />
+    <ProjectReference Include="..\..\src\NetOfd.Sign\NetOfd.Sign.csproj" />
+    <ProjectReference Include="..\..\src\NetOfd.Tool\NetOfd.Tool.csproj" />
+    <ProjectReference Include="..\..\src\NetOfd.Crypto\NetOfd.Crypto.csproj" />
+    <ProjectReference Include="..\..\src\NetOfd.Archive\NetOfd.Archive.csproj" />
+  </ItemGroup>
+</Project>

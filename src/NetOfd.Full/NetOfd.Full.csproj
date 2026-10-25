@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>NetOfd.Full</AssemblyName>
+    <RootNamespace>NetOfd.Full</RootNamespace>
+    <PackageId>NetOfd.Full</PackageId>
+    <Description>NetOfd.Full - 完整聚合包（对应 Java ofdrw-full），包含 OFD 读写、渲染、数字签名、国密、归档与工具全部子模块</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- 与现有 NetOfd 聚合一致的 7 个核心模块 -->
+    <ProjectReference Include="..\NetOfd.Core\NetOfd.Core.csproj" />
+    <ProjectReference Include="..\NetOfd.Emr\NetOfd.Emr.csproj" />
+    <ProjectReference Include="..\NetOfd.Pkg\NetOfd.Pkg.csproj" />
+    <ProjectReference Include="..\NetOfd.Font\NetOfd.Font.csproj" />
+    <ProjectReference Include="..\NetOfd.Reader\NetOfd.Reader.csproj" />
+    <ProjectReference Include="..\NetOfd.Layout\NetOfd.Layout.csproj" />
+    <ProjectReference Include="..\NetOfd.Graphics2D\NetOfd.Graphics2D.csproj" />
+    <ProjectReference Include="..\NetOfd.Converter\NetOfd.Converter.csproj" />
+    <!-- ofdrw-full 相较 NetOfd 额外聚合的 4 个模块 -->
+    <ProjectReference Include="..\NetOfd.Crypto\NetOfd.Crypto.csproj" />
+    <ProjectReference Include="..\NetOfd.Sign\NetOfd.Sign.csproj" />
+    <ProjectReference Include="..\NetOfd.Tool\NetOfd.Tool.csproj" />
+    <ProjectReference Include="..\NetOfd.Archive\NetOfd.Archive.csproj" />
+  </ItemGroup>
+</Project>

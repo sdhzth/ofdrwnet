@@ -1,0 +1,22 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- BouncyCastle for SM2/SM3/SM4 cryptography -->
+    <PackageVersion Include="BouncyCastle.Cryptography" Version="2.4.0" />
+    <!-- SkiaSharp for cross-platform font metrics and image handling -->
+    <PackageVersion Include="SkiaSharp" Version="2.88.8" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="2.88.8" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.macOS" Version="2.88.8" />
+    <!-- PdfPig for PDF → OFD vector conversion -->
+    <PackageVersion Include="UglyToad.PdfPig" Version="1.7.0-custom-5" />
+    <!-- Microsoft.Extensions for DI and logging support (optional) -->
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
+    <!-- xUnit for testing -->
+    <PackageVersion Include="xunit" Version="2.9.0" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+  </ItemGroup>
+</Project>

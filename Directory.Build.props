@@ -1,0 +1,28 @@
+﻿<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>12</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Authors>NetOfd Contributors</Authors>
+    <Company>NetOfd</Company>
+    <Copyright>Copyright © 2024 NetOfd Contributors</Copyright>
+    <VersionPrefix>1.2.0</VersionPrefix>
+    <Description>NetOfd - OFD (Open Fixed-layout Document, GB/T 33190) Reader &amp; Writer for .NET, ported from OFDRW Java library</Description>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <RepositoryType>git</RepositoryType>
+    <Platforms>AnyCPU</Platforms>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <!-- 打包增强：可复现构建 + 源码调试符号包 -->
+    <Deterministic>true</Deterministic>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(IsPackable)' != 'false' and '$(OutputType)' != 'Exe'">
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" Link="README.md" />
+  </ItemGroup>
+</Project>

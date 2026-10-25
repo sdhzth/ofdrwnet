@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>NetOfd.Crypto</AssemblyName>
+    <RootNamespace>NetOfd.Crypto</RootNamespace>
+    <Description>NetOfd Crypto - OFD 文档密码应用（GM/T 0099-2020）：对称加密(SM4)、国密密钥派生、口令/证书密钥管理、文档加密解密</Description>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BouncyCastle.Cryptography" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NetOfd.Core\NetOfd.Core.csproj" />
+    <ProjectReference Include="..\NetOfd.Sign\NetOfd.Sign.csproj" />
+  </ItemGroup>
+</Project>

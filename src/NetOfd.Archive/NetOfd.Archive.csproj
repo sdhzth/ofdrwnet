@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>NetOfd.Archive</AssemblyName>
+    <RootNamespace>NetOfd.Archive</RootNamespace>
+    <Description>NetOfd Archive - OFD-A 长期保存（GB/T 42133-2022）：23 条规则合规检查 + 23 个处理器去技术化转换</Description>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NetOfd.Core\NetOfd.Core.csproj" />
+    <!-- EncryptionHandler 需要 GM/T 0099 解密能力 -->
+    <ProjectReference Include="..\NetOfd.Crypto\NetOfd.Crypto.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- ImageConvertHandler 需要图像解码/重编码为 PNG -->
+    <PackageReference Include="SkiaSharp" />
+  </ItemGroup>
+</Project>

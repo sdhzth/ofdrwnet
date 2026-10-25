@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>NetOfd.Tool</AssemblyName>
+    <RootNamespace>NetOfd.Tool</RootNamespace>
+    <Description>NetOfd Tool - OFD 文档工具（合并/混合/删除/重组），参考 ofdrw-tool</Description>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NetOfd.Core\NetOfd.Core.csproj" />
+  </ItemGroup>
+</Project>

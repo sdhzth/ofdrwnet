@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>NetOfd.Sign</AssemblyName>
+    <RootNamespace>NetOfd.Sign</RootNamespace>
+    <Description>NetOfd Sign - OFD 数字签名/电子签章（参考 ofdrw-sign，GB/T 33280 / GM/T 0031 SES_V1）</Description>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- BouncyCastle for SM2/SM3 (CPM-managed version in Directory.Packages.props) -->
+    <PackageReference Include="BouncyCastle.Cryptography" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NetOfd.Core\NetOfd.Core.csproj" />
+    <ProjectReference Include="..\NetOfd.Reader\NetOfd.Reader.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>NetOfd.Graphics2D</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NetOfd.Layout\NetOfd.Layout.csproj" />
+    <ProjectReference Include="..\NetOfd.Pkg\NetOfd.Pkg.csproj" />
+    <ProjectReference Include="..\NetOfd.Core\NetOfd.Core.csproj" />
+  </ItemGroup>
+</Project>

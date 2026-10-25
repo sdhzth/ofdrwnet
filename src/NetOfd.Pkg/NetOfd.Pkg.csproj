@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>NetOfd.Pkg</AssemblyName>
+    <RootNamespace>NetOfd.Pkg</RootNamespace>
+    <PackageId>NetOfd.Pkg</PackageId>
+    <Description>NetOfd Pkg - Virtual container and ZIP packaging for OFD files</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BouncyCastle.Cryptography" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NetOfd.Core\NetOfd.Core.csproj" />
+  </ItemGroup>
+</Project>

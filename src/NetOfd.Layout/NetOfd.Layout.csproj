@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>NetOfd.Layout</AssemblyName>
+    <RootNamespace>NetOfd.Layout</RootNamespace>
+    <PackageId>NetOfd.Layout</PackageId>
+    <Description>NetOfd Layout - Layout engine and main OFD document writing API</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
+    <PackageReference Include="SkiaSharp.NativeAssets.macOS" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NetOfd.Core\NetOfd.Core.csproj" />
+    <ProjectReference Include="..\NetOfd.Pkg\NetOfd.Pkg.csproj" />
+    <ProjectReference Include="..\NetOfd.Font\NetOfd.Font.csproj" />
+  </ItemGroup>
+</Project>

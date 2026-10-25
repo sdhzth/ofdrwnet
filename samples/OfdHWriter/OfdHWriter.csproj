@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>OfdHWriter</AssemblyName>
+    <RootNamespace>OfdHWriter</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\NetOfd\NetOfd.csproj" />
+    <ProjectReference Include="..\..\src\NetOfd.Emr\NetOfd.Emr.csproj" />
+  </ItemGroup>
+</Project>

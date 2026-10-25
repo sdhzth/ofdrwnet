@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ windows-latest, ubuntu-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # Linux 渲染/文本测试需要 CJK 字体（Windows 自带宋体，Ubuntu 需安装 Noto CJC 并别名 SimSun）
+      - name: Install CJK fonts (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-cjk fontconfig
+          mkdir -p ~/.fonts
+          fc-list | grep -i "noto sans cjk" || true
+          cat > ~/.fonts/simsun-alias.conf << 'EOF'
+          <?xml version="1.0"?>
+          <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+          <fontconfig>
+            <alias><family>SimSun</family><prefer><family>Noto Sans CJK SC</family></prefer></alias>
+            <alias><family>宋体</family><prefer><family>Noto Sans CJK SC</family></prefer></alias>
+          </fontconfig>
+          EOF
+          fc-cache -f
+
+      - name: Restore
+        run: dotnet restore netofd.slnx
+
+      - name: Build
+        run: dotnet build netofd.slnx -c Release --no-restore -v q
+
+      - name: Test
+        run: dotnet test tests/NetOfd.Tests/NetOfd.Tests.csproj -c Release --no-build --nologo --collect:"XPlat Code Coverage" --results-directory coverage
+
+      - name: Upload coverage
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/**/coverage.cobertura.xml
+          retention-days: 14
+
+      - name: Pack
+        if: runner.os == 'Windows'
+        run: dotnet pack netofd.slnx -c Release --no-build -v q -o artifacts/nupkgs
+
+      - name: Upload packages
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: nupkgs
+          path: |
+            artifacts/nupkgs/*.nupkg
+            artifacts/nupkgs/*.snupkg
+          retention-days: 14

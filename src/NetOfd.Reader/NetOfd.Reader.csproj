@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>NetOfd.Reader</AssemblyName>
+    <RootNamespace>NetOfd.Reader</RootNamespace>
+    <PackageId>NetOfd.Reader</PackageId>
+    <Description>NetOfd Reader - OFD document parser and resource management</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NetOfd.Core\NetOfd.Core.csproj" />
+    <ProjectReference Include="..\NetOfd.Pkg\NetOfd.Pkg.csproj" />
+    <ProjectReference Include="..\NetOfd.Font\NetOfd.Font.csproj" />
+  </ItemGroup>
+</Project>

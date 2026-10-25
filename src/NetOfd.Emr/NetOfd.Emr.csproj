@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>NetOfd.Emr</AssemblyName>
+    <RootNamespace>NetOfd.Emr</RootNamespace>
+    <PackageId>NetOfd.Emr</PackageId>
+    <Description>NetOfd Emr - OFD-H (GB/T 48666) electronic medical record structured data: WS/T 500 shared document generation and standard structured export</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NetOfd.Core\NetOfd.Core.csproj" />
+    <ProjectReference Include="..\NetOfd.Layout\NetOfd.Layout.csproj" />
+    <ProjectReference Include="..\NetOfd.Reader\NetOfd.Reader.csproj" />
+  </ItemGroup>
+</Project>

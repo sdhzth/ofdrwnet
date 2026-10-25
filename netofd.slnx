@@ -1,0 +1,26 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/NetOfd.Core/NetOfd.Core.csproj" />
+    <Project Path="src/NetOfd.Emr/NetOfd.Emr.csproj" />
+    <Project Path="src/NetOfd.Font/NetOfd.Font.csproj" />
+    <Project Path="src/NetOfd.Graphics2D/NetOfd.Graphics2D.csproj" />
+    <Project Path="src/NetOfd.Layout/NetOfd.Layout.csproj" />
+    <Project Path="src/NetOfd.Pkg/NetOfd.Pkg.csproj" />
+    <Project Path="src/NetOfd.Reader/NetOfd.Reader.csproj" />
+    <Project Path="src/NetOfd/NetOfd.csproj" />
+    <Project Path="src/NetOfd.Converter/NetOfd.Converter.csproj" />
+    <Project Path="src/NetOfd.Sign/NetOfd.Sign.csproj" />
+    <Project Path="src/NetOfd.Tool/NetOfd.Tool.csproj" />
+    <Project Path="src/NetOfd.Crypto/NetOfd.Crypto.csproj" />
+    <Project Path="src/NetOfd.Archive/NetOfd.Archive.csproj" />
+    <Project Path="src/NetOfd.Full/NetOfd.Full.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/NetOfd.TestConsole/NetOfd.TestConsole.csproj" />
+    <Project Path="tests/NetOfd.Tests/NetOfd.Tests.csproj" />
+  </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/OfdHWriter/OfdHWriter.csproj" />
+    <Project Path="samples/OfdHExporter/OfdHExporter.csproj" />
+  </Folder>
+</Solution>
