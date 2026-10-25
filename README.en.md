@@ -403,7 +403,7 @@ repository any more.
 
 3. In this repository, go to **Settings → Secrets and variables → Actions → Variables** and add
    `NUGET_USER` = your nuget.org username (**profile name, not the sign-in email**)
-   — already configured here: `NUGET_USER=sdhzth`
+   — already configured here: `NUGET_USER=sdhzsmart` (use your actual nuget.org profile username)
 
 4. The repository has a protected **`release` environment** (Required reviewers: `sdhzth`).
    After you push a tag the workflow pauses for approval; only then are the packages pushed.

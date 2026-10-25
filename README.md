@@ -387,7 +387,7 @@ nuget.org 已开始淘汰长期 API Key：**2026-08-17 起新签发的 Key 有�
 
 3. 本仓库 **Settings → Secrets and variables → Actions → Variables** 新增变量
    `NUGET_USER` = 你的 nuget.org 用户名（**profile name，不是登录邮箱**）
-   —— 本仓库已配好：`NUGET_USER=sdhzth`
+   —— 本仓库已配好：`NUGET_USER=sdhzsmart`（以你 nuget.org 实际 profile 用户名为准）
 
 4. 仓库已配置受保护的 **`release` 环境**（Required reviewers：`sdhzth`）。
    推 tag 后工作流会停在「等待审批」，你批准后才会真正推送到 nuget.org。
