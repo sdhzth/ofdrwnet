@@ -345,6 +345,55 @@ Exit codes: `0` success with signature self-check passed / `1` invalid arguments
 | `BouncyCastle.Cryptography` | SM2/SM3/SM4 national cryptography algorithms |
 | `SkiaSharp` | Cross-platform rendering (Converter/Graphics2D) |
 
+## Development and release workflow
+
+While maintaining this project there are two working copies, kept in sync by a script — no manual copying:
+
+| Directory | Role |
+|---|---|
+| `<repo root>/` | **Dev workspace**: day-to-day edits, builds and tests |
+| `<repo root>/github-upload/` | **Publish workspace**: the git repository pushed to GitHub |
+
+### Updating GitHub
+
+```bash
+# 1. edit the code in the dev workspace
+# 2. one command does sync + commit + push
+python tools/sync-publish.py --apply --commit "feat: your message" --push
+```
+
+| Option | Effect |
+|---|---|
+| (none) | Preview: reports which files would be added / modified / deleted, changes nothing |
+| `--apply` | Actually perform the sync |
+| `--check` | Only check whether the two copies are in sync (exit code 1 on differences, usable in CI) |
+| `--commit "msg"` | Run `git add -A` + `git commit` after syncing |
+| `--push` | Commit and push to `origin/master` after syncing |
+
+Sync rules:
+
+- **Whitelist**: `src/` `tests/` `samples/` `tools/` `.github/` plus `netofd.slnx`, `Directory.Build.props`, `Directory.Packages.props`, `README.md`, `README.en.md`
+- **Exclusions are read from the publish workspace's `.gitignore`** (single source of truth, no duplicated rule lists), so build output and AI-session scratch files (`_probe/`, `render_dump/`, `*.log`, …) never get uploaded
+- **Deletion propagation**: a file removed from the dev workspace is removed from the publish workspace and the removal is committed
+- **Publish-only files** (`.gitignore`, `LICENSE`, `LICENSE-Apache-2.0`, `NOTICE`) are never overwritten, but are reported when missing
+
+### Publishing to NuGet
+
+```bash
+# pack (14 nupkg + 14 snupkg)
+dotnet pack netofd.slnx -c Release -o artifacts/nupkg
+
+# publish (first create an API key at https://www.nuget.org/account/apikeys)
+export NUGET_API_KEY=your-key
+./tools/publish-nuget.sh              # push in dependency order
+./tools/publish-nuget.sh --dry-run    # pre-flight checks only
+```
+
+`publish-nuget.sh` pushes in dependency topological order (`NetOfd.Core` → … → `NetOfd.Full`) —
+nuget.org rejects a package whose dependency has not been published yet, so the order matters.
+The script also verifies a consistent version across all packages, that every package is present,
+that the README is embedded, and skips packages that already exist.
+
 ## License
 
 This project uses a **dual license**:

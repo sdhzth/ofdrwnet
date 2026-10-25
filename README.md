@@ -333,6 +333,54 @@ dotnet run --project samples/OfdHWriter -- <out.ofd> [--work <工作目录>] [--
 | `BouncyCastle.Cryptography` | SM2/SM3/SM4 国密算法 |
 | `SkiaSharp` | 跨平台渲染（Converter/Graphics2D） |
 
+## 开发与发布工作流
+
+维护时本项目分为两份工作区，内容由脚本自动同步，无需手工拷贝：
+
+| 目录 | 角色 |
+|---|---|
+| `<仓库根>/` | **开发态**：日常改动、构建、测试都在这里 |
+| `<仓库根>/github-upload/` | **发布态**：git 仓库，最终推送到 GitHub |
+
+### 更新到 GitHub
+
+```bash
+# 1. 在开发态改代码
+# 2. 一条命令完成「同步 + 提交 + 推送」
+python tools/sync-publish.py --apply --commit "feat: 你的提交信息" --push
+```
+
+| 参数 | 作用 |
+|---|---|
+| （无参数） | 预览：报告将新增 / 修改 / 删除哪些文件，不做任何改动 |
+| `--apply` | 实际执行同步 |
+| `--check` | 仅检查是否已同步（有差异时退出码 1，可用于 CI） |
+| `--commit "msg"` | 同步后自动 `git add -A` + `git commit` |
+| `--push` | 同步后提交并推送到 `origin/master` |
+
+同步规则：
+
+- **白名单**：`src/` `tests/` `samples/` `tools/` `.github/` + `netofd.slnx` `Directory.Build.props` `Directory.Packages.props` `README.md` `README.en.md`
+- **排除规则直接读取发布态的 `.gitignore`**（唯一来源，不重复维护），因此构建产物与 AI 会话临时产物（`_probe/`、`render_dump/`、`*.log` 等）不会被上传
+- **删除同步**：文件从开发态删除后，发布态的对应文件会被自动删除并提交
+- **发布态专属文件**（`.gitignore`、`LICENSE`、`LICENSE-Apache-2.0`、`NOTICE`）不会被覆盖，缺失时在报告中提示
+
+### 发布 NuGet 包
+
+```bash
+# 打包（14 个 nupkg + 14 个 snupkg）
+dotnet pack netofd.slnx -c Release -o artifacts/nupkg
+
+# 发布（先在 https://www.nuget.org/account/apikeys 生成 API Key）
+export NUGET_API_KEY=你的密钥
+./tools/publish-nuget.sh              # 按依赖顺序推送
+./tools/publish-nuget.sh --dry-run    # 仅做前置检查
+```
+
+`publish-nuget.sh` 按依赖拓扑顺序推送（`NetOfd.Core` → … → `NetOfd.Full`）——
+nuget.org 会拒绝依赖尚未发布的包，因此顺序不能乱。脚本还会检查版本号一致性、
+包齐备性、README 是否已打包，并对「版本已存在」自动跳过。
+
 ## 许可证
 
 本项目采用**双协议**：
