@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
 # ============================================================================
-# NetOfd —— NuGet 发布脚本
+# NetOfd —— NuGet 本地发布脚本（命令行方式）
 #
-# 用途：把 artifacts/nupkg 下的包按「被依赖者在前」的顺序推送到 nuget.org。
+# ⚠️ 重要：长期 API Key 正在被淘汰
+#    · 2026-08-17 起，nuget.org 新签发的 API Key 有效期仅 30 天
+#    · 2026-11-01 起，此前签发的长期 API Key 将停止工作
+#    官方推荐改用 **Trusted Publishing**（OIDC，CI/CD 内免密钥）：
+#      GitHub Actions 方案见 .github/workflows/publish.yml
+#      （需先在 nuget.org → Account → Trusted Publishing 配置策略）
 #
-# 前置条件：
-#   1. 在 https://www.nuget.org/account/apikeys 生成 API Key（勾选
-#      "Push packages" 与 "Unlist packages"）
-#   2. 设置环境变量 NUGET_API_KEY（或在本脚本提示时粘贴）
-#   3. 已完成 dotnet pack netofd.slnx -c Release -o artifacts/nupkg
+#    本脚本仍可用于：本地临时发布、推送到私有源（Azure Artifacts / 内部源）。
+#    若只发 nuget.org，建议直接推 tag 触发 GitHub Actions。
 #
 # 用法：
 #   ./tools/publish-nuget.sh                    # 推送到 nuget.org
-#   ./tools/publish-nuget.sh --source <url>     # 推送到私有源（如 Azure Artifacts）
+#   ./tools/publish-nuget.sh --source <url>     # 推送到私有源
 #   ./tools/publish-nuget.sh --skip-symbols     # 不推 snupkg
 #   ./tools/publish-nuget.sh --dry-run          # 只做前置检查，不实际推送
 #
@@ -59,6 +61,8 @@ if [[ -z "${NUGET_API_KEY:-}" ]]; then
   else
     echo "未设置 NUGET_API_KEY。"
     echo "  获取方式: https://www.nuget.org/account/apikeys"
+    echo "  ⚠ 注意：长期 API Key 将于 2026-11-01 停止工作，官方推荐改用"
+    echo "    Trusted Publishing（GitHub Actions: .github/workflows/publish.yml）"
     printf "请粘贴 API Key（输入不回显，留空则取消）: "
     read -rs NUGET_API_KEY
     echo

@@ -1,0 +1,157 @@
+name: Publish NuGet
+
+# ============================================================================
+# 使用 NuGet Trusted Publishing（OIDC）向 nuget.org 发布包。
+#
+# 不再依赖长期 API Key：工作流运行时向 GitHub 申请 OIDC 身份令牌，
+# nuget.org 校验后签发一张**有效期约 1 小时的一次性**临时 API Key，
+# 推送完成后即失效。
+#
+# 启用前需在 nuget.org 配置一次（见 README「发布 NuGet 包」章节）：
+#   1. 注册 nuget.org 账户（用户名建议与 GitHub 一致）
+#   2. Account → Trusted Publishing → Add policy：
+#        Repository Owner : sdhzth
+#        Repository       : ofdrwnet
+#        Workflow File    : publish.yml      ← 只填文件名，不带 .github/workflows/ 路径
+#        Environment      : 留空（若改用 environment 则两处必须一致）
+#   3. 本仓库 Settings → Secrets and variables → Actions → Variables
+#        新增变量 NUGET_USER = 你的 nuget.org 用户名（profile name，不是邮箱）
+#
+# 触发方式：推送形如 v1.2.3 的 tag，或手动 workflow_dispatch。
+# ============================================================================
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '要发布的版本号（须与 Directory.Build.props 的 VersionPrefix 一致）'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      id-token: write          # 申请 OIDC 身份令牌（发布必需）
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Resolve version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          # tag 触发时用 tag；手动触发时用输入框
+          TAG="${{ github.event.inputs.tag }}"
+          if [ -z "$TAG" ]; then TAG="${GITHUB_REF#refs/tags/}"; fi
+          TAG="${TAG#v}"
+          # 单一事实来源 = Directory.Build.props 的 VersionPrefix
+          PREFIX=$(grep -oP '(?<=<VersionPrefix>)[^<]+' Directory.Build.props)
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "prefix=$PREFIX" >> "$GITHUB_OUTPUT"
+          if [ "$TAG" != "$PREFIX" ]; then
+            echo "✘ 版本不一致：tag=$TAG  Directory.Build.props VersionPrefix=$PREFIX"
+            echo "  请先改 Directory.Build.props 的 VersionPrefix，或推送与之一致的 tag。"
+            exit 1
+          fi
+          echo "版本核对通过：$TAG"
+
+      - name: Restore
+        run: dotnet restore netofd.slnx
+
+      - name: Build
+        run: dotnet build netofd.slnx -c Release --no-restore -v q
+
+      - name: Pack
+        run: dotnet pack netofd.slnx -c Release --no-build -v q -o artifacts/nupkgs
+
+      # 临时 API Key 有效期约 1 小时 —— 必须紧贴推送步骤获取
+      - name: NuGet login (OIDC → 临时 API Key)
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      - name: Publish to NuGet.org
+        shell: bash
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          # 必须按依赖拓扑顺序推送：nuget.org 会拒绝「依赖尚未发布」的包
+          ORDER=(
+            NetOfd.Core
+            NetOfd.Font
+            NetOfd.Pkg
+            NetOfd.Reader
+            NetOfd.Sign
+            NetOfd.Crypto
+            NetOfd.Archive
+            NetOfd.Layout
+            NetOfd.Graphics2D
+            NetOfd.Converter
+            NetOfd.Emr
+            NetOfd.Tool
+            NetOfd
+            NetOfd.Full
+          )
+          VER="${{ steps.version.outputs.tag }}"
+          FAILED=0
+          for id in "${ORDER[@]}"; do
+            pkg="artifacts/nupkgs/$id.$VER.nupkg"
+            if [ ! -f "$pkg" ]; then
+              echo "✘ 缺少包: $id.$VER.nupkg"; FAILED=1; continue
+            fi
+            echo "→ 推送 $id.$VER.nupkg"
+            if ! dotnet nuget push "$pkg" \
+                --source https://api.nuget.org/v3/index.json \
+                --api-key "$NUGET_API_KEY" \
+                --skip-duplicate; then
+              echo "✘ 推送失败: $id"; FAILED=1
+            fi
+            sleep 2   # 规避 nuget.org 频率限制
+          done
+          [ "$FAILED" == "0" ] || { echo "存在推送失败的包"; exit 1; }
+
+      - name: Publish symbol packages
+        shell: bash
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          VER="${{ steps.version.outputs.tag }}"
+          for pkg in artifacts/nupkgs/*.snupkg; do
+            echo "→ 推送 $(basename "$pkg")"
+            dotnet nuget push "$pkg" \
+              --source https://api.nuget.org/v3/index.json \
+              --api-key "$NUGET_API_KEY" \
+              --no-symbols --skip-duplicate || true
+            sleep 2
+          done
+
+      - name: Summary
+        shell: bash
+        run: |
+          echo "### 已发布 ${{ steps.version.outputs.tag }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 包 | 版本 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          for f in artifacts/nupkgs/*.nupkg; do
+            b=$(basename "$f" .nupkg)
+            echo "| \`$b\` | ${{ steps.version.outputs.tag }} |" >> "$GITHUB_STEP_SUMMARY"
+          done

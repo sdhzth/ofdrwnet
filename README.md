@@ -367,19 +367,59 @@ python tools/sync-publish.py --apply --commit "feat: 你的提交信息" --push
 
 ### 发布 NuGet 包
 
-```bash
-# 打包（14 个 nupkg + 14 个 snupkg）
-dotnet pack netofd.slnx -c Release -o artifacts/nupkg
+#### 方式 A：Trusted Publishing（官方推荐，免密钥）
 
-# 发布（先在 https://www.nuget.org/account/apikeys 生成 API Key）
-export NUGET_API_KEY=你的密钥
-./tools/publish-nuget.sh              # 按依赖顺序推送
-./tools/publish-nuget.sh --dry-run    # 仅做前置检查
+nuget.org 已开始淘汰长期 API Key：**2026-08-17 起新签发的 Key 有效期仅 30 天，2026-11-01 起存量长期 Key 停止工作**。
+官方推荐改用 **Trusted Publishing** —— CI 运行时用 GitHub 的 OIDC 身份令牌换一张**约 1 小时有效的一次性**临时 Key，
+用完即弃，仓库里不再存任何凭证。
+
+**一次性配置：**
+
+1. 注册 nuget.org 账户（用户名建议与 GitHub 一致；本项目对应 profile 为 `sdhzth`）
+2. 登录后进入 [Account → Trusted Publishing](https://www.nuget.org/account/trustedpublishing) → **Add policy**：
+
+   | 字段 | 填写内容 |
+   |---|---|
+   | Repository Owner | `sdhzth` |
+   | Repository | `ofdrwnet` |
+   | Workflow File | `publish.yml`　← **只填文件名**，不带 `.github/workflows/` 路径，不要填 workflow 的 `name:` |
+   | Environment | 留空（若后续启用 GitHub Environment 则两处必须一致） |
+
+3. 本仓库 **Settings → Secrets and variables → Actions → Variables** 新增变量
+   `NUGET_USER` = 你的 nuget.org 用户名（**profile name，不是登录邮箱**）
+
+**发布：**
+
+```bash
+# 打 tag 即可触发（tag 版本必须与 Directory.Build.props 的 VersionPrefix 一致，否则工作流会报错中止）
+git tag v1.2.0 && git push origin v1.2.0
 ```
 
-`publish-nuget.sh` 按依赖拓扑顺序推送（`NetOfd.Core` → … → `NetOfd.Full`）——
+工作流 [`.github/workflows/publish.yml`](.github/workflows/publish.yml) 会自动完成：
+OIDC 换临时 Key → 按依赖拓扑顺序推送 14 个包 + 14 个符号包 → 生成发布摘要。
+
+#### 方式 B：本地命令行（适合私有源 / 临时补发）
+
+```bash
+dotnet pack netofd.slnx -c Release -o artifacts/nupkg
+export NUGET_API_KEY=你的密钥      # https://www.nuget.org/account/apikeys
+./tools/publish-nuget.sh            # 按依赖顺序推送
+./tools/publish-nuget.sh --dry-run  # 仅做前置检查
+./tools/publish-nuget.sh --source <私有源 URL>
+```
+
+`publish-nuget.sh` 会按依赖拓扑顺序推送（`NetOfd.Core` → … → `NetOfd.Full`）——
 nuget.org 会拒绝依赖尚未发布的包，因此顺序不能乱。脚本还会检查版本号一致性、
 包齐备性、README 是否已打包，并对「版本已存在」自动跳过。
+
+> ⚠️ 走命令行需要长期 API Key，受上述 2026-11-01 截止日期影响；**仅发 nuget.org 建议用方式 A**。
+
+#### 注意事项
+
+- **包版本号在 nuget.org 上不可重用** —— 发错了只能递增版本重新发布，没有「删掉重传」的选项
+- **包 ID 一经发布即被永久占用**，改名字等于放弃旧包
+- 误发可用 **Unlist** 下架（24 小时内可完全删除），下架后使用者还原仍会命中旧版本
+- `dotnet nuget push` 的 `--skip-duplicate` 可让重复发布变成幂等操作
 
 ## 许可证
 

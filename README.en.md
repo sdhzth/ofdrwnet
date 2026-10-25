@@ -379,20 +379,69 @@ Sync rules:
 
 ### Publishing to NuGet
 
-```bash
-# pack (14 nupkg + 14 snupkg)
-dotnet pack netofd.slnx -c Release -o artifacts/nupkg
+#### Option A: Trusted Publishing (official recommendation, keyless)
 
-# publish (first create an API key at https://www.nuget.org/account/apikeys)
-export NUGET_API_KEY=your-key
-./tools/publish-nuget.sh              # push in dependency order
-./tools/publish-nuget.sh --dry-run    # pre-flight checks only
+nuget.org is retiring long-lived API keys: **keys created after 2026-08-17 are limited to a 30-day
+lifetime, and existing long-lived keys stop working on 2026-11-01**. The official recommendation is
+**Trusted Publishing** — the CI run exchanges GitHub's OIDC identity token for a **short-lived
+(~1 hour), single-use** API key, which is discarded when the job ends. No credential is stored in the
+repository any more.
+
+**One-time setup:**
+
+1. Register a nuget.org account (use the same username as GitHub if you can — the matching profile
+   here would be `sdhzth`)
+2. Sign in and open [Account → Trusted Publishing](https://www.nuget.org/account/trustedpublishing)
+   → **Add policy**:
+
+   | Field | Value |
+   |---|---|
+   | Repository Owner | `sdhzth` |
+   | Repository | `ofdrwnet` |
+   | Workflow File | `publish.yml`　← **file name only**, without the `.github/workflows/` path, and not the workflow's `name:` |
+   | Environment | leave empty (if you later use a GitHub Environment, both sides must match) |
+
+3. In this repository, go to **Settings → Secrets and variables → Actions → Variables** and add
+   `NUGET_USER` = your nuget.org username (**profile name, not the sign-in email**)
+
+**Publish:**
+
+```bash
+# pushing a tag triggers the workflow (the tag version must match VersionPrefix in
+# Directory.Build.props, otherwise the workflow fails fast)
+git tag v1.2.0 && git push origin v1.2.0
+```
+
+The workflow [`.github/workflows/publish.yml`](.github/workflows/publish.yml) then handles everything:
+exchange the OIDC token for a temporary key → push the 14 packages + 14 symbol packages in dependency
+topological order → write a release summary.
+
+#### Option B: command line (private feeds / ad-hoc re-push)
+
+```bash
+dotnet pack netofd.slnx -c Release -o artifacts/nupkg
+export NUGET_API_KEY=your-key      # https://www.nuget.org/account/apikeys
+./tools/publish-nuget.sh            # pushes in dependency order
+./tools/publish-nuget.sh --dry-run  # pre-flight checks only
+./tools/publish-nuget.sh --source <private-feed-url>
 ```
 
 `publish-nuget.sh` pushes in dependency topological order (`NetOfd.Core` → … → `NetOfd.Full`) —
 nuget.org rejects a package whose dependency has not been published yet, so the order matters.
 The script also verifies a consistent version across all packages, that every package is present,
 that the README is embedded, and skips packages that already exist.
+
+> ⚠️ The command-line route needs a long-lived API key and is therefore affected by the
+> 2026-11-01 cut-off. **Prefer Option A when publishing to nuget.org.**
+
+#### Caveats
+
+- **Package versions cannot be reused on nuget.org** — if you publish the wrong bits you must bump the
+  version; there is no "delete and upload again"
+- **A package ID is permanently reserved** once published; changing the name means abandoning the old package
+- A mistaken publish can be taken down with **Unlist** (fully deletable within 24 hours); consumers
+  restoring an exact version still hit the unlisted version
+- `dotnet nuget push --skip-duplicate` makes repeated publishing idempotent
 
 ## License
 
