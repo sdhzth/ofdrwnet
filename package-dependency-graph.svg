@@ -1,86 +1,87 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1222 460" font-family="Segoe UI,Microsoft YaHei,Arial,sans-serif" font-size="12">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2680 960" font-family="Segoe UI,Microsoft YaHei,Arial,sans-serif" font-size="24">
 <defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#888"/></marker><marker id="ahb" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#1f6feb"/></marker></defs>
-<rect x="0" y="0" width="1222" height="460" fill="#ffffff"/>
-<text x="14" y="22" font-size="14" font-weight="bold" fill="#222">NetOfd v1.3.0 — Package Dependency Graph</text>
-<text x="14" y="40" font-size="11" fill="#666">Arrow A → B means “A depends on B”. Solid gray = module deps; blue = aggregator packages.</text>
-<path d="M352,77.0 C183.0,77.0 183.0,247.0 14,247.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M352,157.0 C183.0,157.0 183.0,247.0 14,247.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M352,317.0 C183.0,317.0 183.0,247.0 14,247.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M352,407.0 C183.0,407.0 183.0,247.0 14,247.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M522,107.0 C268.0,107.0 268.0,247.0 14,247.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M522,107.0 C353.0,107.0 353.0,157.0 184,157.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M522,107.0 C353.0,107.0 353.0,77.0 184,77.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M522,227.0 C268.0,227.0 268.0,247.0 14,247.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M522,227.0 C353.0,227.0 353.0,157.0 184,157.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M522,227.0 C353.0,227.0 353.0,77.0 184,77.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M692,167.0 C353.0,167.0 353.0,247.0 14,247.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M692,167.0 C438.0,167.0 438.0,157.0 184,157.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M692,167.0 C523.0,167.0 523.0,227.0 354,227.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M692,337.0 C353.0,337.0 353.0,247.0 14,247.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M692,337.0 C523.0,337.0 523.0,107.0 354,107.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M862,97.0 C438.0,97.0 438.0,247.0 14,247.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M862,97.0 C608.0,97.0 608.0,107.0 354,107.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M862,97.0 C523.0,97.0 523.0,157.0 184,157.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M862,97.0 C608.0,97.0 608.0,227.0 354,227.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M862,97.0 C693.0,97.0 693.0,167.0 524,167.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M862,267.0 C438.0,267.0 438.0,247.0 14,247.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M862,267.0 C523.0,267.0 523.0,317.0 184,317.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M862,407.0 C438.0,407.0 438.0,247.0 14,247.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M862,407.0 C608.0,407.0 608.0,227.0 354,227.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M862,407.0 C608.0,407.0 608.0,107.0 354,107.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M862,407.0 C523.0,407.0 523.0,77.0 184,77.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M862,407.0 C693.0,407.0 693.0,337.0 524,337.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M862,407.0 C523.0,407.0 523.0,317.0 184,317.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
-<path d="M1032,197.0 C523.0,197.0 523.0,247.0 14,247.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,347.0 C523.0,347.0 523.0,247.0 14,247.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,197.0 C608.0,197.0 608.0,77.0 184,77.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,347.0 C608.0,347.0 608.0,77.0 184,77.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,197.0 C608.0,197.0 608.0,157.0 184,157.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,347.0 C608.0,347.0 608.0,157.0 184,157.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,197.0 C693.0,197.0 693.0,107.0 354,107.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,347.0 C693.0,347.0 693.0,107.0 354,107.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,197.0 C693.0,197.0 693.0,227.0 354,227.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,347.0 C693.0,347.0 693.0,227.0 354,227.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,197.0 C778.0,197.0 778.0,167.0 524,167.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,347.0 C778.0,347.0 778.0,167.0 524,167.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,197.0 C863.0,197.0 863.0,97.0 694,97.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,347.0 C863.0,347.0 863.0,97.0 694,97.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,197.0 C778.0,197.0 778.0,337.0 524,337.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,347.0 C778.0,347.0 778.0,337.0 524,337.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,197.0 C608.0,197.0 608.0,317.0 184,317.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,347.0 C608.0,347.0 608.0,317.0 184,317.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,197.0 C608.0,197.0 608.0,407.0 184,407.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,347.0 C608.0,347.0 608.0,407.0 184,407.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,197.0 C863.0,197.0 863.0,267.0 694,267.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,347.0 C863.0,347.0 863.0,267.0 694,267.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,197.0 C863.0,197.0 863.0,407.0 694,407.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<path d="M1032,347.0 C863.0,347.0 863.0,407.0 694,407.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
-<rect x="14" y="230" width="168" height="34" rx="6" ry="6" fill="#0f9d58" stroke="#555" stroke-width="2"/>
-<text x="98.0" y="251.0" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Core</text>
-<rect x="184" y="60" width="168" height="34" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
-<text x="268.0" y="81.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">Font</text>
-<rect x="184" y="140" width="168" height="34" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
-<text x="268.0" y="161.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">Pkg</text>
-<rect x="184" y="300" width="168" height="34" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
-<text x="268.0" y="321.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">Crypto</text>
-<rect x="184" y="390" width="168" height="34" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
-<text x="268.0" y="411.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">Tool</text>
-<rect x="354" y="90" width="168" height="34" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
-<text x="438.0" y="111.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">Reader</text>
-<rect x="354" y="210" width="168" height="34" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
-<text x="438.0" y="231.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">Layout</text>
-<rect x="524" y="150" width="168" height="34" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
-<text x="608.0" y="171.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">Graphics2D</text>
-<rect x="524" y="320" width="168" height="34" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
-<text x="608.0" y="341.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">Sign</text>
-<rect x="694" y="80" width="168" height="34" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
-<text x="778.0" y="101.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">Converter</text>
-<rect x="694" y="250" width="168" height="34" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
-<text x="778.0" y="271.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">Archive</text>
-<rect x="694" y="390" width="168" height="34" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
-<text x="778.0" y="411.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">Emr</text>
-<rect x="864" y="180" width="168" height="34" rx="6" ry="6" fill="#1f6feb" stroke="#555" stroke-width="2"/>
-<text x="948.0" y="201.0" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">NetOfd</text>
-<rect x="864" y="330" width="168" height="34" rx="6" ry="6" fill="#1f6feb" stroke="#555" stroke-width="2"/>
-<text x="948.0" y="351.0" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Full</text>
+<rect x="0" y="0" width="2680" height="960" fill="#ffffff"/>
+<text x="20" y="40" font-size="32" font-weight="bold" fill="#222">NetOfd v1.3.0 — 包依赖关系图 / Package Dependency Graph</text>
+<text x="20" y="72" font-size="24" fill="#666">箭头 A → B 表示「A 依赖 B」  Arrow A → B means “A depends on B”.  灰线=模块依赖, 蓝线=聚合包</text>
+<path d="M385,80.0 C202.5,80.0 202.5,250.0 20,250.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M385,160.0 C202.5,160.0 202.5,250.0 20,250.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M385,320.0 C202.5,320.0 202.5,250.0 20,250.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M385,410.0 C202.5,410.0 202.5,250.0 20,250.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M570,110.0 C295.0,110.0 295.0,250.0 20,250.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M570,110.0 C387.5,110.0 387.5,160.0 205,160.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M570,110.0 C387.5,110.0 387.5,80.0 205,80.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M570,230.0 C295.0,230.0 295.0,250.0 20,250.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M570,230.0 C387.5,230.0 387.5,160.0 205,160.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M570,230.0 C387.5,230.0 387.5,80.0 205,80.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M755,170.0 C387.5,170.0 387.5,250.0 20,250.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M755,170.0 C480.0,170.0 480.0,160.0 205,160.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M755,170.0 C572.5,170.0 572.5,230.0 390,230.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M755,340.0 C387.5,340.0 387.5,250.0 20,250.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M755,340.0 C572.5,340.0 572.5,110.0 390,110.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M940,100.0 C480.0,100.0 480.0,250.0 20,250.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M940,100.0 C665.0,100.0 665.0,110.0 390,110.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M940,100.0 C572.5,100.0 572.5,160.0 205,160.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M940,100.0 C665.0,100.0 665.0,230.0 390,230.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M940,100.0 C757.5,100.0 757.5,170.0 575,170.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M940,270.0 C480.0,270.0 480.0,250.0 20,250.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M940,270.0 C572.5,270.0 572.5,320.0 205,320.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M940,410.0 C480.0,410.0 480.0,250.0 20,250.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M940,410.0 C665.0,410.0 665.0,230.0 390,230.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M940,410.0 C665.0,410.0 665.0,110.0 390,110.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M940,410.0 C572.5,410.0 572.5,80.0 205,80.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M940,410.0 C757.5,410.0 757.5,340.0 575,340.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M940,410.0 C572.5,410.0 572.5,320.0 205,320.0" fill="none" stroke="#888" stroke-width="1" opacity="0.8" marker-end="url(#ah)"/>
+<path d="M1125,200.0 C572.5,200.0 572.5,250.0 20,250.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,350.0 C572.5,350.0 572.5,250.0 20,250.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,200.0 C665.0,200.0 665.0,80.0 205,80.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,350.0 C665.0,350.0 665.0,80.0 205,80.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,200.0 C665.0,200.0 665.0,160.0 205,160.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,350.0 C665.0,350.0 665.0,160.0 205,160.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,200.0 C757.5,200.0 757.5,110.0 390,110.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,350.0 C757.5,350.0 757.5,110.0 390,110.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,200.0 C757.5,200.0 757.5,230.0 390,230.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,350.0 C757.5,350.0 757.5,230.0 390,230.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,200.0 C850.0,200.0 850.0,170.0 575,170.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,350.0 C850.0,350.0 850.0,170.0 575,170.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,200.0 C942.5,200.0 942.5,100.0 760,100.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,350.0 C942.5,350.0 942.5,100.0 760,100.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,200.0 C850.0,200.0 850.0,340.0 575,340.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,350.0 C850.0,350.0 850.0,340.0 575,340.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,200.0 C665.0,200.0 665.0,320.0 205,320.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,350.0 C665.0,350.0 665.0,320.0 205,320.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,200.0 C665.0,200.0 665.0,410.0 205,410.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,350.0 C665.0,350.0 665.0,410.0 205,410.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,200.0 C942.5,200.0 942.5,270.0 760,270.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,350.0 C942.5,350.0 942.5,270.0 760,270.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,200.0 C942.5,200.0 942.5,410.0 760,410.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<path d="M1125,350.0 C942.5,350.0 942.5,410.0 760,410.0" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.45" marker-end="url(#ahb)"/>
+<rect x="20" y="230" width="180" height="40" rx="6" ry="6" fill="#0f9d58" stroke="#555" stroke-width="2"/>
+<text x="110.0" y="254.0" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">NetOfd.Core</text>
+<rect x="205" y="60" width="180" height="40" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
+<text x="295.0" y="84.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">NetOfd.Font</text>
+<rect x="205" y="140" width="180" height="40" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
+<text x="295.0" y="164.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">NetOfd.Pkg</text>
+<rect x="205" y="300" width="180" height="40" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
+<text x="295.0" y="324.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">NetOfd.Crypto</text>
+<rect x="205" y="390" width="180" height="40" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
+<text x="295.0" y="414.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">NetOfd.Tool</text>
+<rect x="390" y="90" width="180" height="40" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
+<text x="480.0" y="114.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">NetOfd.Reader</text>
+<rect x="390" y="210" width="180" height="40" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
+<text x="480.0" y="234.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">NetOfd.Layout</text>
+<rect x="575" y="150" width="180" height="40" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
+<text x="665.0" y="174.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">NetOfd.Graphics2D</text>
+<rect x="575" y="320" width="180" height="40" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
+<text x="665.0" y="344.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">NetOfd.Sign</text>
+<rect x="760" y="80" width="180" height="40" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
+<text x="850.0" y="104.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">NetOfd.Converter</text>
+<rect x="760" y="250" width="180" height="40" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
+<text x="850.0" y="274.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">NetOfd.Archive</text>
+<rect x="760" y="390" width="180" height="40" rx="6" ry="6" fill="#eef3fb" stroke="#555" stroke-width="1.2"/>
+<text x="850.0" y="414.0" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="normal">NetOfd.Emr</text>
+<rect x="945" y="180" width="180" height="40" rx="6" ry="6" fill="#1f6feb" stroke="#555" stroke-width="2"/>
+<text x="1035.0" y="204.0" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">NetOfd</text>
+<rect x="945" y="330" width="180" height="40" rx="6" ry="6" fill="#1f6feb" stroke="#555" stroke-width="2"/>
+<text x="1035.0" y="354.0" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">NetOfd.Full</text>
+<text x="20" y="930" font-size="24" fill="#666">灰线 = 模块依赖 (module deps)    蓝线 = 聚合包 (aggregator)</text>
 </svg>
