@@ -31,6 +31,11 @@ on:
         description: '要发布的版本号（须与 Directory.Build.props 的 VersionPrefix 一致）'
         required: true
         type: string
+      dry_run:
+        description: '只做全链路演练：构建、打包、换取临时 Key 全部执行，但不真正推送'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -69,19 +74,29 @@ jobs:
       - name: Resolve version
         id: version
         shell: bash
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+          DRY_RUN: ${{ inputs.dry_run || 'false' }}
         run: |
           set -euo pipefail
-          # tag 触发时用 tag；手动触发时用输入框
-          TAG="${{ github.event.inputs.tag }}"
-          if [ -z "$TAG" ]; then TAG="${GITHUB_REF#refs/tags/}"; fi
+          # tag 触发时用 tag；手动触发时用输入框（输入经 env 传入，避免表达式直接内插到脚本里）
+          TAG="${INPUT_TAG:-${GITHUB_REF#refs/tags/}}"
           TAG="${TAG#v}"
           # 单一事实来源 = Directory.Build.props 的 VersionPrefix
           PREFIX=$(grep -oP '(?<=<VersionPrefix>)[^<]+' Directory.Build.props)
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "prefix=$PREFIX" >> "$GITHUB_OUTPUT"
+          echo "dry_run=$DRY_RUN" >> "$GITHUB_OUTPUT"
           if [ "$TAG" != "$PREFIX" ]; then
             echo "✘ 版本不一致：tag=$TAG  Directory.Build.props VersionPrefix=$PREFIX"
-            echo "  请先改 Directory.Build.props 的 VersionPrefix，或推送与之一致的 tag。"
+            echo ""
+            echo "  打包的包版本由 VersionPrefix 决定，tag 只是触发器 —— 两者必须一致，"
+            echo "  否则会出现「tag 写着 A、实际发出去的是 B」这种无法追踪的版本错乱。"
+            echo ""
+            echo "  二选一："
+            echo "   ① 把 Directory.Build.props 的 <VersionPrefix> 改成 $TAG，然后重新提交并推 tag"
+            echo "   ② 改推一个与 $PREFIX 一致的 tag：git tag v$PREFIX && git push origin v$PREFIX"
+            echo "   ③ 手动触发时在 tag 输入框里填 $PREFIX"
             exit 1
           fi
           echo "版本核对通过：$TAG"
@@ -106,6 +121,7 @@ jobs:
         shell: bash
         env:
           NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+          DRY_RUN: ${{ steps.version.outputs.dry_run }}
         run: |
           set -euo pipefail
           shopt -s nullglob
@@ -127,6 +143,22 @@ jobs:
             NetOfd.Full
           )
           VER="${{ steps.version.outputs.tag }}"
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "── dry-run：临时 Key 已成功换取（说明 OIDC 策略与身份校验通过），但不实际推送 ──"
+            FAILED=0
+            for id in "${ORDER[@]}"; do
+              pkg="artifacts/nupkgs/$id.$VER.nupkg"
+              if [ -f "$pkg" ]; then
+                printf "  将推送 %-38s %8d B\n" "$id.$VER.nupkg" "$(stat -c%s "$pkg")"
+              else
+                echo "  ✘ 缺少包: $id.$VER.nupkg"; FAILED=1
+              fi
+            done
+            [ "$FAILED" == "0" ] || { echo "存在缺失的包"; exit 1; }
+            echo ""
+            echo "演练完成 —— 把 dry_run 设为 false（或推正式 tag）即可真正发布。"
+            exit 0
+          fi
           FAILED=0
           for id in "${ORDER[@]}"; do
             pkg="artifacts/nupkgs/$id.$VER.nupkg"
@@ -148,9 +180,14 @@ jobs:
         shell: bash
         env:
           NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+          DRY_RUN: ${{ steps.version.outputs.dry_run }}
         run: |
           set -euo pipefail
           shopt -s nullglob
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "dry-run：跳过符号包推送"
+            exit 0
+          fi
           VER="${{ steps.version.outputs.tag }}"
           for pkg in artifacts/nupkgs/*.snupkg; do
             echo "→ 推送 $(basename "$pkg")"
