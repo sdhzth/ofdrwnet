@@ -2,6 +2,8 @@
 
 [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE) [![license](https://img.shields.io/badge/ported%20code-Apache--2.0-blue)](./LICENSE-Apache-2.0)
 
+**[简体中文](README.md) | [English](README.en.md)**
+
 ## 概述
 
 NetOfd 是 [OFDRW (OFD Reader & Writer)](https://github.com/ofdrw/ofdrw) v2.3.8 的 .NET 跨平台移植版本，
@@ -15,6 +17,125 @@ NetOfd 是 [OFDRW (OFD Reader & Writer)](https://github.com/ofdrw/ofdrw) v2.3.8 
 - **批量编辑会话** `OfdEditSession`：注释/版本/水印等多次编辑一次落盘；`OfdDocEditor` 支持并行导出
 - **真实语料护栏**：67 个 Java 测试文档全量 打开/渲染/提取 冒烟测试（100% 通过）
 - **文字装饰**：下划线/删除线/加粗/斜体/段落对齐完整落盘
+
+## OFD-H 电子病历支持（GB/T 48666—2026）
+
+`NetOfd.Emr` 模块 + `samples/OfdHWriter` / `samples/OfdHExporter` 两个命令行工具，
+提供了 **GB/T 48666—2026《电子病历版式文档技术要求》** 的落地能力：
+生成符合 OFD-H 要求的版式文档，并在其中嵌入机读的结构化诊疗数据。
+
+### 覆盖的标准体系
+
+| 标准 | 含义 | 在 NetOfd 中的落地 |
+|---|---|---|
+| **GB/T 48666—2026** | 电子病历版式文档技术要求 | 主标准：DocType 标识、包结构、元数据、标引、附件、版本、加注、签名、防夹带 |
+| **GB/T 33190—2016** | 电子文件存储与交换格式 版式文档 | OFD 基础格式（`Doc_0` 单文档、`ofd:` 命名空间前缀、ZIP 线性化） |
+| **WS/T 500.32—2016** | 电子病历共享文档规范 第 32 部分：住院病案首页 | HL7 CDA R2 `ClinicalDocument` 构造与解析（`Wst500Builder`） |
+| **WS 445.10—2014** | 电子病历基本数据集 第 10 部分：住院病案首页 | 56 个 DE 码数据元（`Wst500Codes`）与结构化导出 |
+| **WS/T 482—2016** | 卫生信息共享文档编制规范 | 共享文档体结构约束 |
+| **GB/T 35275** | 信息安全技术 数字签名格式规范 | SM2withSM3 国密签名 / 验签（`OfdSigner`） |
+| **GM/T 0099—2020** | 电子文档安全技术 签名存证与防抵赖 | §7.4.3 防夹带 / 完整性保护（`OfdIntegrity`） |
+
+引用的代码表：GB/T 2261.1（生理性别）、GB/T 2261.2（婚姻状况）、GB 3304（民族类别）、
+ISO 3166-1（国籍）、ICD-10（疾病分类）、ICD-9-CM-3（手术操作）、LOINC（章节编码）。
+
+### 条款实现对照
+
+`samples/OfdHWriter/EmrGenerator.cs` 顶部注释逐条记录了生成流程与标准条款的对应关系：
+
+| 条款 | 要求 | 实现 |
+|---|---|---|
+| 6.1.2 | 单文档承载（`Doc_0`，OFD 格式） | `OFDDoc` 单文档 |
+| 6.1.3 | ZIP 6.2 + Deflate、线性化（`OFDEntries.xml` 索引） | `RepackLinearized` |
+| 6.2 | 包内规范目录结构（表 1） | `NormalizeStructure` |
+| 7.1 a) | `DocType="OFD-H"` | `OFRoot.OfdDocType` |
+| 7.1 c) | 元数据 DocInfo（患者 / 责任者 / 时间 / 关键词） | `ConfigureDocInfo` |
+| 7.2 b) | 字型数据嵌入（仿宋 FontFile） | `EmbedFonts` |
+| 7.2 c) | 图像资源嵌入（DocumentRes + `Res/`） | `Img` 元素 |
+| 7.3 c) | 结构化数据以自定义标引存储 | `OfdTagger.AddCustomTag` ×2 |
+| 7.4 | 附件（`Attachs/Attachments.xml` + `Attach_N.png`） | `OfdAttacher` + 规范化 |
+| 7.5 | 机读信息（文件头 / 元数据 / 标识信息，UTF-8） | 机读信息 XML 标引 |
+| 7.6 | 版本快照（历史版本全量保留） | `OfdVersioner` |
+| 3.12 / 5.3.2 e) | 加注记录（审核批注） | `OfdAnnotator` |
+| 6.3 / 8 c) d) e) | SM2 + SM3 国密签名，保护范围除注释列表、签名列表外全部内容 | `OfdSigner` + `GBT35275DSContainer` |
+| GM/T 0099 §7.4.3 | 防夹带 / 完整性保护 | `OfdIntegrity` + `GmProtectSigner` |
+
+### 生成器：samples/OfdHWriter
+
+```bash
+dotnet run --project samples/OfdHWriter -- <out.ofd> [--work <工作目录>] [--no-sign]
+```
+
+产出一份 **3 页 A4 纵向**（边距 20mm）OFD-H 版式文档：
+
+| 页 | 内容 |
+|---|---|
+| 1 | 住院病案首页（基本信息 6 行 / 就诊信息 6 行 / 诊断 2 行） |
+| 2 | 入院记录（一般项目、主诉、现病史、既往史、个人史 + 家族史、体格检查） |
+| 3 | 辅助检查（心电图文字 + 图像 + 图注）、初步诊断与诊疗计划、医师签名、日期 |
+
+文档同时包含：嵌入仿宋字型、心电图图像资源、内部附件、质控审核加注、版本快照、
+机读信息标引 + WS/T 500 共享文档标引、SM2withSM3 国密签名、GM/T 0099 防夹带保护。
+
+退出码：`0` 成功且签名自检通过 / `1` 参数错误 / `2` 生成异常 / `3` 签名自检失败。
+`--no-sign` 跳过签名与防夹带（仅用于调试结构）。
+
+### 结构化数据：NetOfd.Emr 模块
+
+| 类 | 职责 |
+|---|---|
+| `EmrStructuredData` | 版式页面与机读数据的桥梁：同一份字段既渲染进 OFD-H 版式，又以标准 DE 码写入结构化标引 |
+| `Wst500Builder` | 把 `EmrStructuredData` 序列化为 WS/T 500.32 共享文档（HL7 CDA R2 `ClinicalDocument`） |
+| `Wst500Codes` | 编码常量字典：13 个章节 LOINC 码、56 个数据元 DE 码、11 个 OID 根、11 个值域代码 |
+| `EmrStructuredExporter` | 从 OFD-H 读回自定义标引并还原为标准结构化数据（JSON / 文本） |
+
+```csharp
+using NetOfd.Emr;
+
+var data = new EmrStructuredData
+{
+    PatientName = "张建国",
+    SexCode     = Wst500Codes.SexMale,   // "1"
+    BirthDate   = "19651120",
+};
+data.Diagnoses.Add(new EmrDiagnosis { Name = "不稳定型心绞痛", Code = "I20.0" });
+
+// 构造 WS/T 500.32 共享文档（可作为 OFD-H 自定义标引的载荷）
+byte[] sharedDoc = Wst500Builder.BuildBytes(data);
+
+// 从 OFD-H 反向导出结构化数据
+var result = EmrStructuredExporter.Export("病历.ofd");
+Console.WriteLine(EmrStructuredExporter.ToJson(result));
+```
+
+`Wst500Builder` 生成的 `ClinicalDocument` 覆盖 10 个章节（LOINC 编码），
+`entry` 内嵌于 `section` 之下，观测值分 `PQ`（数值 + 单位）/ `CD`（编码值）/ `ST`（文本）三类。
+
+### 导出器：samples/OfdHExporter
+
+```bash
+dotnet run --project samples/OfdHExporter -- <in.ofd> [--out <输出目录>] [--format json|xml|text|all]
+```
+
+| 产物 | 内容 |
+|---|---|
+| `<base>_结构化数据.json` | WS 445.10 扁平数据元（`DE 码 → 值`）+ 诊断数组 |
+| `<base>_WS_T500共享文档.xml` | WS/T 500.32 共享文档原文 |
+| `<base>_结构化数据.txt` | 可读文本汇总 |
+
+退出码：`0` 成功 / `1` 参数错误或输入不存在 / `2` 导出异常 / `3` 未找到结构化数据标引。
+
+### 已知边界
+
+诚实列出当前实现的局限，便于评估可用范围：
+
+- **章节覆盖 10/13**：已定义但未实现的 3 个章节为转科记录（`28570-0`）、出院诊断（`56846-4`）、行政管理（`32473-6`）。
+- **数据元覆盖 33/56**：56 个 DE 码常量中约 23 个尚未写入共享文档（用药、血型、出生体重、尸检标志、病理号、外因等）。
+- **部分字段只入版式、不入机读**：`EmrStructuredData` 中的就诊类字段（年龄、住院次数、入出院时间、入院途径、入出院科室、病区、付费方式、责任护士、编码医师等）目前仅出现在版式页面，未进入结构化标引。
+- **仅覆盖 1 个共享文档 part**：当前只实现 WS/T 500.32（住院病案首页），WS/T 500 系列其余 part 未涉及。
+- **生成器无端到端自动化测试**：`OfdHWriter` 的 3 页结构、字型嵌入、签名、防夹带、线性化目前靠人工验证；结构化部分有 12 个专项单元测试（含 XML → 标引 → 导出闭环）。
+- **字型嵌入为 Windows 专用路径**：仿宋取自 `C:\Windows\Fonts\simfang.ttf`，Linux / macOS 下需自行提供字体。
+- **演示文档 ID 固定**：为保证演示可复现，`OfdHWriter` 使用固定 `DocID`；生产环境应改用 `Guid.NewGuid()`。
 
 ## 项目结构
 
@@ -36,7 +157,7 @@ netofd/
 │   ├── NetOfd.Full/          # 全模块聚合
 │   └── NetOfd/               # 统一入口（元包）
 ├── tests/
-│   └── NetOfd.Tests/         # 300+ 单元/集成/性能测试
+│   └── NetOfd.Tests/         # 900+ 单元/集成/性能测试
 ├── samples/                  # 示例项目（写入/签名/渲染转换/OFD-H 生成/结构化导出）
 │   └── OfdHWriter/           # GB/T 48666—2026 电子病历 OFD-H 生成器
 └── Directory.Build.props     # 统一构建属性
@@ -140,13 +261,15 @@ dotnet run --project samples/OfdHWriter -- <out.ofd> [--work <工作目录>] [--
 
 退出码：`0` 成功且签名自检通过 / `1` 参数错误 / `2` 生成异常 / `3` 签名自检失败。
 
+> 完整条款对照、结构化数据 API 与已知边界见 [OFD-H 电子病历支持](#ofd-h-电子病历支持gbt-486662026)。
+
 ## 技术特性
 
 - **跨平台**: 支持 Windows、Linux、macOS（.NET 10；Linux 渲染需安装 CJK 字体）
 - **编辑器架构**: zip 展开为内存映射 + XML 直改，链式调用安全（对象 ID 单调递增）
 - **版本管理**: 文档级快照（Doc_0/V_N）与历史版本提取
 - **国密**: SM2/SM3/SM4 全覆盖，兼容 BouncyCastle 与系统密码库互操作验证
-- **健壮性**: 损坏输入有语义明确的异常或结构化错误结果（308 测试保障）
+- **健壮性**: 损坏输入有语义明确的异常或结构化错误结果（900+ 测试保障）
 
 ## 技术栈映射
 
