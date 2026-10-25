@@ -418,6 +418,24 @@ git tag v1.2.0 && git push origin v1.2.0
 # https://github.com/sdhzth/ofdrwnet/actions
 ```
 
+If you would rather not touch tags, trigger it manually from the Actions page
+(**Publish NuGet → Run workflow**):
+
+| Input | Value |
+|---|---|
+| `tag` | The version number — must match `VersionPrefix` (e.g. `1.2.0`) |
+| `dry_run` | `true` = rehearse without pushing; `false` = really publish |
+
+`dry_run` executes the whole pipeline (build → pack → **OIDC key exchange** → package
+check) but performs no push. That makes it the right way to **validate your nuget.org
+Trusted Publisher policy** before a real release — if the key exchange succeeds, the
+identity check passed.
+
+> **Version consistency is a hard constraint**: the actual package version comes from
+> `VersionPrefix` in `Directory.Build.props`; the tag is only the trigger. If they
+> disagree the workflow **aborts immediately** — otherwise you would end up with
+> "the tag says A but what shipped is B", and nuget.org versions **cannot be reused**.
+
 The workflow [`.github/workflows/publish.yml`](.github/workflows/publish.yml) then handles everything:
 exchange the OIDC token for a temporary key → push the 14 packages + 14 symbol packages in dependency
 topological order → write a release summary.

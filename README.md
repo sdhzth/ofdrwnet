@@ -400,6 +400,21 @@ git tag v1.2.0 && git push origin v1.2.0
 # 然后到 https://github.com/sdhzth/ofdrwnet/actions 批准 release 环境的部署
 ```
 
+不想动 tag 时，也可以在 Actions 页面手动触发（**Publish NuGet → Run workflow**）：
+
+| 输入项 | 填什么 |
+|---|---|
+| `tag` | 版本号，必须与 `VersionPrefix` 一致（如 `1.2.0`） |
+| `dry_run` | `true` = 只演练不推送；`false` = 真正发布 |
+
+`dry_run` 会完整执行 构建 → 打包 → **OIDC 换临时 Key** → 包完整性检查，
+但不执行推送。因此它可以用来**验证 nuget.org 上的 Trusted Publisher 策略是否配置正确**
+（能换到 Key 就说明身份校验通过），确认无误后再发正式版本。
+
+> **版本一致性是硬约束**：包的实际版本号由 `Directory.Build.props` 的 `VersionPrefix` 决定，
+> tag 只是触发器。若二者不一致，工作流会**直接中止**——否则会出现「tag 写着 A、实际发出去的是 B」
+> 这种无法追踪的版本错乱，而 nuget.org 的版本号又**不可重用**。
+
 工作流 [`.github/workflows/publish.yml`](.github/workflows/publish.yml) 会自动完成：
 OIDC 换临时 Key → 按依赖拓扑顺序推送 14 个包 + 14 个符号包 → 生成发布摘要。
 
