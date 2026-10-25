@@ -46,6 +46,17 @@ jobs:
       - name: Build
         run: dotnet build netofd.slnx -c Release --no-restore -v q
 
+      # 真实语料护栏：浅克隆 Java ofdrw 仓库，取其 69 个测试 OFD 跑冒烟
+      # （--depth 1 避免拉全量历史；--filter=blob:none 只按需取 blob）
+      - name: Fetch Java ofdrw corpus
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --filter=blob:none --no-tags \
+            https://github.com/ofdrw/ofdrw.git "$RUNNER_TEMP/ofdrw-master"
+          echo "NETOFD_CORPUS_ROOT=$RUNNER_TEMP/ofdrw-master" >> "$GITHUB_ENV"
+          echo "语料文件数: $(find "$RUNNER_TEMP/ofdrw-master" -name '*.ofd' | wc -l)"
+
       - name: Test
         run: dotnet test tests/NetOfd.Tests/NetOfd.Tests.csproj -c Release --no-build --nologo --collect:"XPlat Code Coverage" --results-directory coverage
 
