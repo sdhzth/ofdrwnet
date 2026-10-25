@@ -1,5 +1,7 @@
 # NetOfd - 跨平台 OFD 读写库
 
+[![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE) [![license](https://img.shields.io/badge/ported%20code-Apache--2.0-blue)](./LICENSE-Apache-2.0)
+
 ## 概述
 
 NetOfd 是 [OFDRW (OFD Reader & Writer)](https://github.com/ofdrw/ofdrw) v2.3.8 的 .NET 跨平台移植版本，
@@ -165,4 +167,15 @@ dotnet run --project samples/OfdHWriter -- <out.ofd> [--work <工作目录>] [--
 
 ## 许可证
 
-Apache License 2.0（与 OFDRW 保持一致）
+本项目采用**双协议**：
+
+| 范围 | 协议 | 文件 |
+|---|---|---|
+| NetOfd 自有代码（如 `NetOfd.Emr` 等非移植模块） | MIT License | [LICENSE](LICENSE) |
+| 自 OFDRW 移植而来的代码 | Apache License 2.0 | [LICENSE-Apache-2.0](LICENSE-Apache-2.0) |
+
+NetOfd 是 [OFDRW](https://github.com/ofdrw/ofdrw)（Copyright (c) 2020 Quan guanyu，Apache-2.0）
+的 .NET 移植版本。根据 Apache-2.0 §4，移植而来的部分保留原协议、声明修改并保留版权声明，
+详见 [NOTICE](NOTICE)。
+
+本项目是独立实现，与 OFDRW 项目无隶属或背书关系。

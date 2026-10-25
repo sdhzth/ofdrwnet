@@ -1,0 +1,33 @@
+NetOfd
+Copyright (c) 2026 smart
+
+This product includes software developed by the NetOfd project as a .NET
+(C#) port and adaptation of OFDRW — OFD Reader & Writer
+(https://github.com/ofdrw/ofdrw), Copyright (c) 2020 Quan guanyu, which is
+licensed under the Apache License, Version 2.0.
+
+The ported portions of this software are governed by the Apache License,
+Version 2.0 (see LICENSE-Apache-2.0). All modifications made in the course
+of porting are the work of the NetOfd authors.
+
+The following OFDRW modules were ported (OFDRW v2.3.8):
+
+  ofdrw-core        -> NetOfd.Core
+  ofdrw-pkg         -> NetOfd.Pkg
+  ofdrw-font        -> NetOfd.Font
+  ofdrw-reader      -> NetOfd.Reader
+  ofdrw-layout      -> NetOfd.Layout
+  ofdrw-graphics2d  -> NetOfd.Graphics2D
+  ofdrw-converter   -> NetOfd.Converter
+  ofdrw-sign        -> NetOfd.Sign
+  ofdrw-crypto      -> NetOfd.Crypto
+  ofdrw-tool        -> NetOfd.Tool
+  ofdrw-archive     -> NetOfd.Archive
+  ofdrw-full        -> NetOfd.Full / NetOfd
+
+Modules that are not derived from OFDRW — for example NetOfd.Emr
+(OFD-H structured data generation and standard export) — are licensed under
+the MIT License (see LICENSE).
+
+NetOfd is an independent re-implementation; it is not affiliated with or
+endorsed by the OFDRW project.
