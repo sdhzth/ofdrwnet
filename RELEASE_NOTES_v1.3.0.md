@@ -28,18 +28,22 @@ NetOfd 是 [OFDRW (OFD Reader & Writer)](https://github.com/ofdrw/ofdrw) v2.3.8 
 | `NetOfd.Tool` | 命令行工具集 |
 | `NetOfd.Archive` | OFD-A 长期归档（GB/T 42133-2022） |
 | `NetOfd.Emr` | **OFD-H 电子病历**（GB/T 48666—2026，详见下文） |
-| `NetOfd` | 核心聚合包（Core/Font/Pkg/Reader/Layout/Graphics2D/Converter） |
-| `NetOfd.Full` | 完整聚合包（上述 11 个模块，含 Crypto/Sign/Tool/Archive/Emr） |
+| `NetOfd` | 聚合包 —— 引用全部 12 个子模块包 |
+| `NetOfd.Full` | 聚合包 —— 引用全部 12 个子模块包（与 `NetOfd` 集合一致） |
 
-> 推荐直接引用聚合包：`NetOfd`（常用 7 模块）或 `NetOfd.Full`（全功能 11 模块）。
+> `NetOfd` 与 `NetOfd.Full` 均聚合全部 12 个子模块，按需选择其一即可。
 
 ```bash
-# 核心聚合（不含签名/加密/EMR）
+# 聚合包（含全部 12 个子模块）
 dotnet add package NetOfd
 
-# 全功能聚合（含国密签名、归档、OFD-H）
+# 聚合包（含全部 12 个子模块，集合与 NetOfd 一致）
 dotnet add package NetOfd.Full
 ```
+
+### 包依赖关系图
+
+![NetOfd 包依赖关系图](./package-dependency-graph.svg)
 
 ---
 
