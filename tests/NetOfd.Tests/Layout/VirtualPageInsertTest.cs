@@ -22,8 +22,19 @@ namespace NetOfd.Tests.Layout;
 /// </summary>
 public class VirtualPageInsertTest
 {
-    private static string Out(string name) =>
-        Path.Combine(Path.GetTempPath(), "netofd_layout_tests", name);
+    /// <summary>
+    /// 输出目录。必须自行创建 —— 不能依赖其它测试残留的目录
+    /// （Linux CI 上从零开始，该目录不存在会直接抛 DirectoryNotFoundException）。
+    /// 用独立目录名，避免与其它测试类并行写同一目录。
+    /// </summary>
+    private static string OutDir()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "netofd_vpage_insert_tests");
+        Directory.CreateDirectory(dir);
+        return dir;
+    }
+
+    private static string Out(string name) => Path.Combine(OutDir(), name);
 
     /// <summary>读取生成文档 Document.xml 中页面（BaseLoc）的先后顺序</summary>
     private static List<string> ReadPageOrder(string ofdPath)
