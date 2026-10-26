@@ -262,10 +262,14 @@ public class OFDDoc : IDisposable
         // 将水印追加到已创建的每个页面的前景层
         var docDir = _ofdDir!.GetDocByIndex(0);
         if (docDir == null) return this;
-        var pageCount = docDir.GetPagesCount();
-        for (int i = 0; i < pageCount; i++)
+
+        // 按 Document.xml 中 <Page> 的顺序遍历：文档页序由页面树决定，
+        // 与物理目录 Page_N 的编号未必一致（虚拟页面可插入到指定页码）
+        var pageRefs = docDir.ObtainDocument().ObtainPages().GetPages();
+        foreach (var pageRef in pageRefs)
         {
-            var pageDir = docDir.ObtainPages().ObtainPageDir(i);
+            var pageDir = ResolvePageDir(docDir, pageRef);
+            if (pageDir == null) continue;
             var pageObj = pageDir.ObtainContent();
             var content = pageObj.ObtainContent();
             var layer = content.GetLayers().FirstOrDefault(l => l.LayerType == LayerType.Foreground);
@@ -279,6 +283,21 @@ public class OFDDoc : IDisposable
             pageDir.SetContent(pageObj);
         }
         return this;
+    }
+
+    /// <summary>
+    /// 按页面树条目解析其物理页面目录。
+    /// <para>
+    /// Page 的 BaseLoc 形如 <c>Pages/Page_0/Content.xml</c>，其中倒数第二段即物理目录名。
+    /// </para>
+    /// </summary>
+    private static Pkg.Container.PageDir? ResolvePageDir(Pkg.Container.DocDir docDir, NetOfd.Core.BasicStructure.PageTree.Page pageRef)
+    {
+        var baseLoc = pageRef.BaseLoc;
+        if (baseLoc is null) return null;
+        var parts = baseLoc.Parts();
+        if (parts.Length < 2) return null;
+        return docDir.ObtainPages().ObtainPageDirByName(parts[^2]);
     }
 
     /// <summary>
@@ -327,7 +346,10 @@ public class OFDDoc : IDisposable
     }
 
     /// <summary>向 Document.xml 的 Pages 节点注册新页面</summary>
-    private void RegisterPageInDocument(Pkg.Container.DocDir docDir, Pkg.Container.PageDir pageDir)
+    /// <param name="docDir">文档目录</param>
+    /// <param name="pageDir">页面目录</param>
+    /// <param name="insertIndex">插入位置（0-based，0 表示插到最前）；为 null 时追加到末尾</param>
+    private void RegisterPageInDocument(Pkg.Container.DocDir docDir, Pkg.Container.PageDir pageDir, int? insertIndex = null)
     {
         var doc = docDir.ObtainDocument();
         var pages = doc.ObtainPages();
@@ -342,7 +364,10 @@ public class OFDDoc : IDisposable
             ID = pageId,
             BaseLoc = baseLoc
         };
-        pages.AddPage(pageRef);
+        if (insertIndex.HasValue)
+            pages.InsertPage(insertIndex.Value, pageRef);
+        else
+            pages.AddPage(pageRef);
     }
 
     /// <summary>创建绘制上下文</summary>
@@ -1124,6 +1149,20 @@ public class OFDDoc : IDisposable
         var pageDir = docDir.ObtainNewPage();
         var pageObj = new PageObject();
 
+        // 页面插入位置（对齐 Java VPageParseEngine.addNewPage）：
+        // PageNum 未指定 → 追加到末尾（渲染后回填实际页码）；
+        // PageNum 已指定 → 插入到第 PageNum 页（1-based）的位置，越界自动钳制。
+        // 注意：size 取插入前的页数，与 Java addNewPage 内的钳制基准一致。
+        int? insertIndex = null;
+        if (vPage.PageNum is int targetPageNum)
+        {
+            int size = docDir.ObtainDocument().ObtainPages().Count;
+            int idx = targetPageNum - 1;
+            if (idx <= 0) idx = 0;
+            else if (idx >= size) idx = size;
+            insertIndex = idx;
+        }
+
         // 记录当前渲染页绝对 loc（AreaHolderBlock 登记 PageFile 用，对齐 Java ST_Loc 绝对路径）。
         // RenderVPage 不经 AddPage 建页，须在渲染图层内容前同步维护。
         _renderPageLoc = $"/{docDir.Name}/Pages/{pageDir.Name}/Content.xml";
@@ -1179,7 +1218,12 @@ public class OFDDoc : IDisposable
         }
 
         pageDir.SetContent(pageObj);
-        RegisterPageInDocument(docDir, pageDir);
+        RegisterPageInDocument(docDir, pageDir, insertIndex);
+
+        // 追加模式下回填实际页码（对齐 Java：newPage() 之后 setPageNum(size)），
+        // 调用方可在 Close() 之后查询该虚拟页面最终落在第几页。
+        if (vPage.PageNum is null)
+            vPage.SetPageNum(docDir.ObtainDocument().ObtainPages().Count);
     }
 
     /// <summary>

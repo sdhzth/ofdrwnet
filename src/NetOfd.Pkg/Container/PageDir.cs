@@ -11,9 +11,19 @@ public class PagesDir : VirtualContainer
     public PagesDir(string name = "Pages", string? physicalPath = null) : base(name, physicalPath) { }
 
     /// <summary>获取或创建第 index 个页面目录（0-based）</summary>
-    public PageDir ObtainPageDir(int index)
+    public PageDir ObtainPageDir(int index) => ObtainPageDirByName(PageDir.PageContainerPrefix + index);
+
+    /// <summary>
+    /// 按目录名获取或创建页面目录（如 <c>Page_0</c>）。
+    /// <para>
+    /// 页面在文档中的先后顺序由 Document.xml 的 &lt;Page&gt; 列表决定，
+    /// 与物理目录 <c>Page_N</c> 的编号未必一致（虚拟页面可插入到指定页码），
+    /// 故需要按目录名（由 BaseLoc 解析而来）定位物理目录。
+    /// </para>
+    /// </summary>
+    /// <param name="dirName">页面目录名</param>
+    public PageDir ObtainPageDirByName(string dirName)
     {
-        string dirName = PageDir.PageContainerPrefix + index;
         if (DirCache.TryGetValue(dirName, out var existing) && existing is PageDir pd)
             return pd;
 
