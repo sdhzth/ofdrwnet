@@ -446,7 +446,7 @@ repository any more.
 ```bash
 # pushing a tag triggers the workflow (the tag version must match VersionPrefix in
 # Directory.Build.props, otherwise the workflow fails fast)
-git tag v1.3.1 && git push origin v1.3.1
+git tag v1.3.2 && git push origin v1.3.2
 # then approve the release deployment at
 # https://github.com/sdhzth/ofdrwnet/actions
 ```
@@ -456,7 +456,7 @@ If you would rather not touch tags, trigger it manually from the Actions page
 
 | Input | Value |
 |---|---|
-| `tag` | The version number — must match `VersionPrefix` (e.g. `1.3.1`) |
+| `tag` | The version number — must match `VersionPrefix` (e.g. `1.3.2`) |
 | `dry_run` | `true` = rehearse without pushing; `false` = really publish |
 
 `dry_run` executes the whole pipeline (build → pack → **OIDC key exchange** → package

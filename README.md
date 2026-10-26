@@ -424,7 +424,7 @@ nuget.org 已开始淘汰长期 API Key：**2026-08-17 起新签发的 Key 有�
 
 ```bash
 # 打 tag 即可触发（tag 版本必须与 Directory.Build.props 的 VersionPrefix 一致，否则工作流会报错中止）
-git tag v1.3.1 && git push origin v1.3.1
+git tag v1.3.2 && git push origin v1.3.2
 # 然后到 https://github.com/sdhzth/ofdrwnet/actions 批准 release 环境的部署
 ```
 
@@ -432,7 +432,7 @@ git tag v1.3.1 && git push origin v1.3.1
 
 | 输入项 | 填什么 |
 |---|---|
-| `tag` | 版本号，必须与 `VersionPrefix` 一致（如 `1.3.1`） |
+| `tag` | 版本号，必须与 `VersionPrefix` 一致（如 `1.3.2`） |
 | `dry_run` | `true` = 只演练不推送；`false` = 真正发布 |
 
 `dry_run` 会完整执行 构建 → 打包 → **OIDC 换临时 Key** → 包完整性检查，
