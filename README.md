@@ -257,6 +257,34 @@ using (var session = OfdEditSession.Open(ofdBytes))
 }
 ```
 
+### 板式（固定）布局：虚拟页面
+
+`VirtualPage` 适合**坐标自算的固定版式**（表单、报表、封面）：内部元素全部绝对定位，**不会自动分页**。
+
+```csharp
+using NetOfd.Layout;
+using NetOfd.Layout.Element;
+
+var vPage = new VirtualPage(PageLayout.A4());
+vPage.Add(new Div()
+    .SetPosition(Position.Absolute)   // 必须绝对定位
+    .SetXY(20, 30)                    // 必须给出 X / Y
+    .SetWidth(170)                    // 必须给出 Width
+    .SetHeight(10)
+    .SetBackgroundColor(new CT_Color { Value = "0,0,255" }));
+doc.AddVPage(vPage);   // 仅入队，Close() 时才落成真实页面
+doc.Close();
+```
+
+- **插入到指定页码**（v1.3.1 新增）：`vPage.SetPageNum(2)` 会在渲染时把该页插入到第 2 页的位置；
+  不设置则追加到末尾。渲染后 `vPage.PageNum` 会回填为该页的**最终页码**，便于调用方查询。
+  物理目录 `Page_N` 仍按追加顺序分配，**文档页序由 `Document.xml` 的 `<Page>` 列表决定**，
+  因此按页码读取（`OFDReader.GetPageText(2)`）始终正确。
+- **母版/底纹复用**：`vPage.AddTemplate(tpl)` 复用固定底纹（生成独立 `Tpl_M/Content.xml`，以 `<Template>` 引用叠加在正文之下）。
+- **图层归属**：`Div.Layer` 决定元素落在前景层 / 正文层 / 背景层（默认正文层 `Body`）。
+- ⚠️ 造多页请用 `VirtualPage` 或 `PageAreaFiller`：**流式 `Add` 与 `AddPage` 交错**会让前面的页空白
+  （流式内容统一从最新页开始排布）。
+
 ### 数字签名与验签
 
 ```csharp
@@ -396,7 +424,7 @@ nuget.org 已开始淘汰长期 API Key：**2026-08-17 起新签发的 Key 有�
 
 ```bash
 # 打 tag 即可触发（tag 版本必须与 Directory.Build.props 的 VersionPrefix 一致，否则工作流会报错中止）
-git tag v1.3.0 && git push origin v1.3.0
+git tag v1.3.1 && git push origin v1.3.1
 # 然后到 https://github.com/sdhzth/ofdrwnet/actions 批准 release 环境的部署
 ```
 
@@ -404,7 +432,7 @@ git tag v1.3.0 && git push origin v1.3.0
 
 | 输入项 | 填什么 |
 |---|---|
-| `tag` | 版本号，必须与 `VersionPrefix` 一致（如 `1.3.0`） |
+| `tag` | 版本号，必须与 `VersionPrefix` 一致（如 `1.3.1`） |
 | `dry_run` | `true` = 只演练不推送；`false` = 真正发布 |
 
 `dry_run` 会完整执行 构建 → 打包 → **OIDC 换临时 Key** → 包完整性检查，

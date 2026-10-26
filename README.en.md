@@ -266,6 +266,39 @@ using (var session = OfdEditSession.Open(ofdBytes))
 }
 ```
 
+### Fixed-layout (板式) pages: VirtualPage
+
+`VirtualPage` targets **fixed layouts with hand-computed coordinates** (forms, reports, covers):
+all elements inside are absolutely positioned, so **there is no automatic pagination**.
+
+```csharp
+using NetOfd.Layout;
+using NetOfd.Layout.Element;
+
+var vPage = new VirtualPage(PageLayout.A4());
+vPage.Add(new Div()
+    .SetPosition(Position.Absolute)   // absolute positioning is mandatory
+    .SetXY(20, 30)                    // X / Y are required
+    .SetWidth(170)                    // Width is required
+    .SetHeight(10)
+    .SetBackgroundColor(new CT_Color { Value = "0,0,255" }));
+doc.AddVPage(vPage);   // only enqueued — the real page is emitted on Close()
+doc.Close();
+```
+
+- **Insert at a specific page number** (new in v1.3.1): `vPage.SetPageNum(2)` makes the page land at
+  position 2 when the document is rendered; without it the page is appended at the end.
+  After rendering, `vPage.PageNum` is back-filled with the page's **final page number** so callers can query it.
+  Physical directories (`Page_N`) are still allocated in append order, while the **document page order is
+  determined by the `<Page>` list in `Document.xml`** — so page-number-based reads
+  (`OFDReader.GetPageText(2)`) always stay correct.
+- **Master / background reuse**: `vPage.AddTemplate(tpl)` reuses a fixed backdrop (rendered into its own
+  `Tpl_M/Content.xml` and overlaid below the body via a `<Template>` reference).
+- **Layer assignment**: `Div.Layer` decides whether an element lands in the foreground / body / background
+  layer (default: body, `Body`).
+- ⚠️ To build multi-page documents prefer `VirtualPage` or `PageAreaFiller`: interleaving streaming `Add`
+  with `AddPage` leaves the earlier pages blank (streamed content is laid out from the latest page onwards).
+
 ### Digital signature and verification
 
 ```csharp
@@ -413,7 +446,7 @@ repository any more.
 ```bash
 # pushing a tag triggers the workflow (the tag version must match VersionPrefix in
 # Directory.Build.props, otherwise the workflow fails fast)
-git tag v1.3.0 && git push origin v1.3.0
+git tag v1.3.1 && git push origin v1.3.1
 # then approve the release deployment at
 # https://github.com/sdhzth/ofdrwnet/actions
 ```
@@ -423,7 +456,7 @@ If you would rather not touch tags, trigger it manually from the Actions page
 
 | Input | Value |
 |---|---|
-| `tag` | The version number — must match `VersionPrefix` (e.g. `1.3.0`) |
+| `tag` | The version number — must match `VersionPrefix` (e.g. `1.3.1`) |
 | `dry_run` | `true` = rehearse without pushing; `false` = really publish |
 
 `dry_run` executes the whole pipeline (build → pack → **OIDC key exchange** → package
