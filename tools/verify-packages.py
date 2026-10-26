@@ -70,6 +70,16 @@ def read_nuspec(pkg: Path) -> tuple[str, str] | None:
 
 
 def main() -> int:
+    # Windows GitHub runner 的 Python stdout 默认编码是 cp1252（ANSI 代码页），
+    # 直接输出中文与框线字符会抛 UnicodeEncodeError → 门禁脚本崩溃（实测踩过）。
+    # 强制 UTF-8 并以 errors="replace" 兜底：门禁必须在任何环境下都能跑完并给出结论。
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            if hasattr(_stream, "reconfigure"):
+                _stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:  # pragma: no cover - 极端环境兜底
+            pass
+
     ap = argparse.ArgumentParser(description="校验发包产物：数量、版本一致性、符号包配对")
     ap.add_argument("dir", help="打包产物目录，如 artifacts/nupkgs")
     ap.add_argument("version", help="期望版本号，如 1.3.1")

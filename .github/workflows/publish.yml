@@ -118,6 +118,8 @@ jobs:
         shell: bash
         env:
           VER: ${{ steps.version.outputs.tag }}
+          # Windows runner 的 Python 默认 stdout 编码为 cp1252，中文/框线会触发 UnicodeEncodeError
+          PYTHONIOENCODING: utf-8
         run: |
           set -euo pipefail
           python tools/verify-packages.py artifacts/nupkgs "$VER"
