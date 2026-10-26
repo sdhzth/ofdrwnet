@@ -361,6 +361,18 @@ dotnet run --project samples/OfdHWriter -- <out.ofd> [--work <工作目录>] [--
 | `BouncyCastle.Cryptography` | SM2/SM3/SM4 国密算法 |
 | `SkiaSharp` | 跨平台渲染（Converter/Graphics2D） |
 
+## 发布说明
+
+各版本的发布说明（每个版本一份中文、一份英文）见 [`docs/releases/`](docs/releases/)：
+
+| 版本 | 中文 | English |
+|---|---|---|
+| **v1.3.2**（当前） | [v1.3.2.md](docs/releases/v1.3.2.md) | [v1.3.2.en.md](docs/releases/v1.3.2.en.md) |
+| v1.3.1 | [v1.3.1.md](docs/releases/v1.3.1.md) | [v1.3.1.en.md](docs/releases/v1.3.1.en.md) |
+| v1.3.0 | [v1.3.0.md](docs/releases/v1.3.0.md) | [v1.3.0.en.md](docs/releases/v1.3.0.en.md) |
+
+包依赖关系图：[PNG](docs/package-dependency-graph.png) · [SVG](docs/package-dependency-graph.svg)
+
 ## 开发与发布工作流
 
 维护时本项目分为两份工作区，内容由脚本自动同步，无需手工拷贝：
