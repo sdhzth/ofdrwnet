@@ -110,6 +110,18 @@ jobs:
       - name: Pack
         run: dotnet pack netofd.slnx -c Release --no-build -v q -o artifacts/nupkgs
 
+      # ── 发包门禁 ────────────────────────────────────────────────────────
+      # 校验：期望的 14 个包齐备、版本号与 tag 一致、符号包一一配对、包内 nuspec 版本一致。
+      # ⚠️ 必须放在「换取临时 Key」之前：门禁不过就不必浪费那张一次性 API Key。
+      # 历史教训：v1.3.0 发版时 NetOfd.Core 硬编码了旧 <Version>，产出 1.2.0 的包名导致缺包失败。
+      - name: Verify package set (gate)
+        shell: bash
+        env:
+          VER: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          python tools/verify-packages.py artifacts/nupkgs "$VER"
+
       # 临时 API Key 有效期约 1 小时 —— 必须紧贴推送步骤获取
       - name: NuGet login (OIDC → 临时 API Key)
         id: login

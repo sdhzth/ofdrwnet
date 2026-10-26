@@ -246,11 +246,14 @@ public class VirtualContainer : IDisposable
         {
             string name = Path.GetFileName(filePath);
             if (FileCache.ContainsKey(name) || RawFiles.ContainsKey(name)) continue;
-            // OFD 元数据文件均为 .xml；其余（字体/图像）按二进制加载
+            // OFD 元数据文件均为 .xml；其余（字体/图像/附件/签名值）按二进制加载
             if (name.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
-                GetFile(name);
+                GetFile(name);   // GetFile 会把元素写入 FileCache
             else
-                GetRaw(name);
+                // ⚠️ 必须用 AddRaw 而非 GetRaw：GetRaw 只从磁盘读、不写缓存，
+                // 而 WriteToZip 只遍历 RawFiles —— 用 GetRaw 会导致编辑模式保存时
+                // 字体/图像/附件/签名值等二进制资源被整体丢弃（实测踩过）。
+                AddRaw(name, File.ReadAllBytes(filePath));
         }
 
         foreach (var dirPath in Directory.EnumerateDirectories(PhysicalPath))
