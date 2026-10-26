@@ -11,6 +11,12 @@ NetOfd.Core.1.2.0.nupkg」而发布脚本去找 1.3.0 的包 → 缺包失败。
     python tools/verify-packages.py artifacts/nupkgs 1.3.1 --expect-count 14
 
 退出码 0 = 门禁通过；非 0 = 门禁未通过（CI 应当中止发布）。
+
+⚠️ **输出文案一律使用纯 ASCII**。
+   GitHub `windows-latest` runner 上 Python 的 stdout 默认编码是 cp1252（ANSI 代码页），
+   打印中文或框线字符会抛 UnicodeEncodeError 直接把门禁脚本打崩（已实测踩过：
+   报错行号曾指向本文件的 print 行）。因此：固定文案用英文，
+   外部数据（目录路径等）由下方的 UTF-8 reconfigure + errors="replace" 兜底。
 """
 
 from __future__ import annotations
@@ -41,8 +47,8 @@ EXPECTED_PACKAGES = [
 ]
 
 # 包文件名形如 NetOfd.Core.1.3.1.nupkg
-# ⚠️ 版本段必须严格按 SemVer 三段式匹配：包 ID 本身含点号（NetOfd.Core），
-#    若版本段允许任意字符会被贪婪拆成 id="NetOfd.Core.1.3" / ver="1"（实测踩过）。
+# 版本段必须严格按 SemVer 三段式匹配：包 ID 本身含点号（NetOfd.Core），
+# 若版本段允许任意字符会被贪婪拆成 id="NetOfd.Core.1.3" / ver="1"（实测踩过）。
 NUPKG_RE = re.compile(
     r"^(?P<base>.+)\.(?P<ver>\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.\-]+)?)\.nupkg$"
 )
@@ -70,9 +76,8 @@ def read_nuspec(pkg: Path) -> tuple[str, str] | None:
 
 
 def main() -> int:
-    # Windows GitHub runner 的 Python stdout 默认编码是 cp1252（ANSI 代码页），
-    # 直接输出中文与框线字符会抛 UnicodeEncodeError → 门禁脚本崩溃（实测踩过）。
-    # 强制 UTF-8 并以 errors="replace" 兜底：门禁必须在任何环境下都能跑完并给出结论。
+    # 外部数据（路径等）可能含非 ASCII：强制 UTF-8 输出并以 replace 兜底，
+    # 避免 Windows runner 的 cp1252 stdout 因一个字符直接崩掉整个门禁。
     for _stream in (sys.stdout, sys.stderr):
         try:
             if hasattr(_stream, "reconfigure"):
@@ -80,91 +85,94 @@ def main() -> int:
         except Exception:  # pragma: no cover - 极端环境兜底
             pass
 
-    ap = argparse.ArgumentParser(description="校验发包产物：数量、版本一致性、符号包配对")
-    ap.add_argument("dir", help="打包产物目录，如 artifacts/nupkgs")
-    ap.add_argument("version", help="期望版本号，如 1.3.1")
+    ap = argparse.ArgumentParser(
+        description="Verify release artifacts: package count, version consistency, symbol pairing"
+    )
+    ap.add_argument("dir", help="packaged output directory, e.g. artifacts/nupkgs")
+    ap.add_argument("version", help="expected version, e.g. 1.3.1")
     ap.add_argument("--expect-count", type=int, default=len(EXPECTED_PACKAGES),
-                    help="期望的 nupkg 数量（默认 %(default)s）")
+                    help="expected number of nupkg files (default: %(default)s)")
     args = ap.parse_args()
 
     root = Path(args.dir)
     ver = args.version
     errors: list[str] = []
-    notes: list[str] = []
 
     if not root.is_dir():
-        print(f"✘ 产物目录不存在: {root}")
+        print(f"[FAIL] output directory not found: {root}")
         return 1
 
     nupkgs = sorted(p for p in root.glob("*.nupkg"))
     snupkgs = sorted(p for p in root.glob("*.snupkg"))
 
     if not nupkgs:
-        print(f"✘ {root} 下没有任何 .nupkg")
+        print(f"[FAIL] no .nupkg files found in {root}")
         return 1
 
-    # ① 期望的包必须齐备
+    # 1) every expected package must be present with the expected version
     names = {p.name for p in nupkgs}
     for pid in EXPECTED_PACKAGES:
         want = f"{pid}.{ver}.nupkg"
         if want not in names:
-            errors.append(f"缺少包: {want}")
+            errors.append(f"missing package: {want}")
 
-    # ② 不得存在版本错位的包（如硬编码旧 Version 产出的包）
+    # 2) no version-mismatched package may exist
     for p in nupkgs:
         m = NUPKG_RE.match(p.name)
         if not m:
-            errors.append(f"文件名格式异常: {p.name}")
+            errors.append(f"unexpected file name format: {p.name}")
             continue
         if m.group("ver") != ver:
-            errors.append(f"版本错位的包: {p.name}（期望版本 {ver}）")
+            errors.append(f"version mismatch: {p.name} (expected {ver})")
 
-    # ③ nupkg 数量必须正好
+    # 3) exact nupkg count
     if len(nupkgs) != args.expect_count:
-        errors.append(f"nupkg 数量应为 {args.expect_count}，实际 {len(nupkgs)}")
+        errors.append(f"nupkg count should be {args.expect_count}, actual {len(nupkgs)}")
 
-    # ④ 符号包与 nupkg 一一配对
+    # 4) symbol packages must pair one-to-one with nupkgs
     snames = {p.name for p in snupkgs}
     for p in nupkgs:
         want = p.name.replace(".nupkg", ".snupkg")
         if want not in snames:
-            errors.append(f"缺少符号包: {want}")
+            errors.append(f"missing symbol package: {want}")
     if len(snupkgs) != len(nupkgs):
-        errors.append(f"符号包数量({len(snupkgs)})与 nupkg 数量({len(nupkgs)})不匹配")
+        errors.append(
+            f"symbol package count ({len(snupkgs)}) does not match nupkg count ({len(nupkgs)})"
+        )
 
-    # ⑤ 双保险：包内 nuspec 的 id/version 必须与文件名一致
+    # 5) belt and braces: nuspec id/version inside each package must match its file name
     for p in nupkgs:
         got = read_nuspec(p)
         if got is None:
-            errors.append(f"无法读取 nuspec: {p.name}")
+            errors.append(f"cannot read nuspec: {p.name}")
             continue
         pid, pver = got
         m = NUPKG_RE.match(p.name)
         fid = m.group("base") if m else ""
         if pver != ver:
-            errors.append(f"{p.name} 内含 nuspec 版本 '{pver}'，与期望 {ver} 不一致")
+            errors.append(f"{p.name}: nuspec version is '{pver}', expected {ver}")
         if fid and pid and pid != fid:
-            errors.append(f"{p.name} 内含 nuspec id '{pid}'，与文件名 '{fid}' 不一致")
+            errors.append(f"{p.name}: nuspec id is '{pid}', file name says '{fid}'")
 
-    print(f"── 发包门禁：{root} ──")
-    print(f"  期望版本   : {ver}")
-    print(f"  nupkg      : {len(nupkgs)} 个")
-    print(f"  snupkg     : {len(snupkgs)} 个")
+    print("== Release gate ==")
+    print(f"  directory    : {root}")
+    print(f"  expect ver   : {ver}")
+    print(f"  nupkg count  : {len(nupkgs)}")
+    print(f"  snupkg count : {len(snupkgs)}")
     for p in nupkgs:
-        print(f"    · {p.name}")
-    if notes:
-        for n in notes:
-            print(f"  提示: {n}")
+        print(f"    - {p.name}")
+
     if errors:
         print("")
         for e in errors:
-            print(f"✘ {e}")
+            print(f"[FAIL] {e}")
         print("")
-        print(f"门禁未通过（{len(errors)} 项问题）—— 已中止，不会推送任何包。")
+        print(f"Gate FAILED with {len(errors)} problem(s) - aborted, nothing was pushed.")
         return 1
 
     print("")
-    print(f"✔ 门禁通过：{len(nupkgs)} 个包 + {len(snupkgs)} 个符号包，版本统一为 {ver}")
+    print(f"[OK] Gate passed: {len(nupkgs)} package(s) + {len(snupkgs)} symbol package(s), "
+          f"all at version {ver}")
     return 0
 
 
