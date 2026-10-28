@@ -384,10 +384,30 @@ public static class OfdHDocumentGenerator
             .FirstOrDefault(f => (string?)f.Attribute("FontName") == fontFamily);
         if (font == null) throw new InvalidOperationException($"PublicRes.xml 中未找到字体「{fontFamily}」");
         font.Element(ofdNs + "FontFile")?.Remove();
-        font.Add(new XElement(ofdNs + "FontFile", "Res/Font_FangSong.ttf"));   // 相对 PublicRes.xml
+        // 字型资源按 GB/T 48666-2026 表 1 规范命名：Font_M.ttf
+        // （M 为字型资源序号，按类型连续编号）
+        // 序号取包内已存在的 Font_*.ttf 之最大者 +1，避免与既有字型资源重名。
+        var fontFileName = NextFontResFileName(map, docDir);
+        font.Add(new XElement(ofdNs + "FontFile", $"Res/{fontFileName}"));   // 相对 PublicRes.xml
         map[resKey] = ToUtf8Bytes(doc, indent: false);
-        map[$"{docDir}/Res/Font_FangSong.ttf"] = File.ReadAllBytes(fontPath);
+        map[$"{docDir}/Res/{fontFileName}"] = File.ReadAllBytes(fontPath);
         return WriteZip(map);
+    }
+
+    /// <summary>
+    /// 计算下一个可用的字型资源文件名（<c>Font_M.ttf</c>，M 为包内字型资源序号）。
+    /// </summary>
+    private static string NextFontResFileName(Dictionary<string, byte[]> map, string docDir)
+    {
+        int max = 0;
+        var rx = new Regex(@"^Font_(\d+)\.", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        foreach (var key in map.Keys)
+        {
+            if (!key.StartsWith($"{docDir}/Res/", StringComparison.OrdinalIgnoreCase)) continue;
+            var m = rx.Match(Path.GetFileName(key));
+            if (m.Success && int.TryParse(m.Groups[1].Value, out int n) && n > max) max = n;
+        }
+        return $"Font_{max + 1}.ttf";
     }
 
     /// <summary>
@@ -715,6 +735,21 @@ public static class OfdHDocumentGenerator
             map[annListKey] = ToUtf8Bytes(WithOfdPrefix(annDoc), indent: false);
         }
 
+        // ── D. 命名空间声明补齐（GB/T 33190-2016 §7.1 / GB/T 48666-2026 §6.2）──
+        // 「容器内各 XML 文件的根节点中应声明 defaults:ofd」。
+        // ⚠️ 必须在本步骤（签名与防夹带之前）完成：签名值与完整性签名值均是对
+        //    文件字节的杂凑，若在签名之后再改字节，签名将无法验证。
+        // ⚠️ OFD.xml 例外：签名步骤会用 LINQ-to-XML 重写它（追加 Signatures 入口），
+        //    而 LINQ 在同一命名空间存在 ofd/defaults 两个前缀声明时会重分配前缀，
+        //    把元素前缀改写为 defaults: —— 违反「标识符宜为 ofd」。
+        //    故 OFD.xml 的注入改由 OfdSigner 在重写之后、计算杂凑之前完成。
+        foreach (var key in map.Keys.ToList())
+        {
+            if (!key.EndsWith(".xml", StringComparison.OrdinalIgnoreCase)) continue;
+            if (key.Equals("OFD.xml", StringComparison.OrdinalIgnoreCase)) continue;
+            map[key] = InjectDefaultsNamespace(key, map[key]);
+        }
+
         return WriteZip(map);
     }
 
@@ -767,6 +802,8 @@ public static class OfdHDocumentGenerator
         if (key == null) return ofd;
         var doc = XDocument.Parse(Encoding.UTF8.GetString(map[key]));
         map[key] = ToUtf8Bytes(WithOfdPrefix(doc), indent: false);
+        // OFDEntries.xml 同样须声明 defaults:ofd（6.2），且注入必须在重签之前
+        map[key] = InjectDefaultsNamespace(key, map[key]);
         map["signedvalue.dat"] = signer.DigestThenSign(map[key]);
         return WriteZip(map);
     }
@@ -1000,6 +1037,25 @@ public static class OfdHDocumentGenerator
         s.Write(content, 0, content.Length);
     }
 
+    /// <summary>
+    /// 若条目为 OFD 命名空间根的 XML，则在其根节点上补齐 <c>xmlns:defaults</c> 声明。
+    /// <para>
+    /// GB/T 33190-2016 §7.1 与 GB/T 48666-2026 §6.2 均要求「容器内各 XML 文件的根节点中
+    /// 应声明 defaults:ofd」。本方法在写出前统一注入，保证包内全部 OFD XML 一致满足该要求。
+    /// </para>
+    /// <para>
+    /// 实现统一委托给 <see cref="NetOfd.Core.OFDElement.InjectDefaultsDeclarationBytes"/>——
+    /// 全库唯一的权威实现（库端容器层与映射层编辑器共用同一份逻辑）。
+    /// </para>
+    /// </summary>
+    private static byte[] InjectDefaultsNamespace(string entryName, byte[] content)
+    {
+        if (!entryName.EndsWith(".xml", StringComparison.OrdinalIgnoreCase)) return content;
+        // 非 OFD 命名空间（如 WS/T 500 共享文档、hl7 ClinicalDocument）原样返回
+        if (!Encoding.UTF8.GetString(content).Contains(OfdNs)) return content;
+        return NetOfd.Core.OFDElement.InjectDefaultsDeclarationBytes(content, OfdNs);
+    }
+
     private static List<(string Name, long Len)> ListEntries(byte[] ofd)
     {
         var result = new List<(string, long)>();
@@ -1037,7 +1093,11 @@ public static class OfdHDocumentGenerator
         using var ms = new MemoryStream();
         using (var w = XmlWriter.Create(ms, settings))
             doc.Save(w);
-        return ms.ToArray();
+        // 还原元素前缀为 ofd:（GB/T 33190-2016 §7.1「标识符宜为 ofd」）。
+        // 本文档已带 xmlns:defaults 声明，LINQ-to-XML 序列化会把元素前缀
+        // 分配给 defaults:（实测 <ofd:Document> → <defaults:Document>），
+        // 故在文本层还原——命名空间声明本身保留，满足「应声明 defaults:ofd」。
+        return NetOfd.Core.OFDElement.RestoreOfdPrefixBytes(ms.ToArray());
     }
 
     private static string ToIso(string cnDateTime)

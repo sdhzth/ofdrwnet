@@ -61,7 +61,21 @@ public class OFDDoc : IDisposable
     // ── AreaHolderBlock 写侧消费（对齐 Java AreaHolderBlockRender，2026-09-04 增量 I）──
     // 渲染到 AreaHolderBlock 元素时：向当前页图层插入空 PageBlock（仅 ID，占位）并登记
     // AreaHolderBlocks.xml（boundary/pageLoc/pageBlockID）。登记在 Flush 末尾统一落盘。
-    private string? _renderPageLoc;                                    // 当前渲染页面 XML 绝对 loc（"/Doc_0/Pages/Page_0/Content.xml"）
+    private string? _renderPageLocField;                                // 当前渲染页面 XML 绝对 loc（"/Doc_0/Pages/Page_0/Content.xml"）
+
+    /// <summary>
+    /// 当前渲染页面的绝对 loc。setter 同时同步给 <see cref="Prm"/>，供资源管理器判定
+    /// 媒体资源的引用页（GB/T 48666-2026 §7.2 a 单页专用资源下沉到 Page_N/PageRes.xml）。
+    /// </summary>
+    private string? _renderPageLoc
+    {
+        get => _renderPageLocField;
+        set
+        {
+            _renderPageLocField = value;
+            if (Prm is not null) Prm.CurrentPageLoc = value;
+        }
+    }
     private AreaHolderBlocks? _areaHolderBlocks;                       // 登记缓存（懒 Obtain，Flush 末尾 PutFile）
 
     // 编辑模式（打开既有 OFD 从末页续写，对齐 Java OFDDoc(reader,out)+addStreamCollect）
@@ -368,6 +382,24 @@ public class OFDDoc : IDisposable
             pages.InsertPage(insertIndex.Value, pageRef);
         else
             pages.AddPage(pageRef);
+    }
+
+    /// <summary>
+    /// 设置媒体资源（图像等）的落位策略。
+    /// <list type="bullet">
+    ///   <item><description><see cref="MediaPlacement.Auto"/>（默认）：仅被单个页面引用的资源
+    ///   下沉到 <c>Page_N/PageRes.xml</c> + <c>Page_N/Res/</c>；多页共用的留在
+    ///   <c>DocumentRes.xml</c> + <c>Doc_0/Res/</c>。</description></item>
+    ///   <item><description><see cref="MediaPlacement.DocumentOnly"/>：全部登记到文档级
+    ///   <c>DocumentRes.xml</c>（Java ofdrw 生成侧基线行为）。</description></item>
+    /// </list>
+    /// <para>对应 GB/T 48666-2026 §7.2 a)：多页共用资源「应」在文档资源列表注册；
+    /// 仅在一个页面内使用的资源「一般」在页面资源列表（Page_N/PageRes.xml）注册。</para>
+    /// </summary>
+    public OFDDoc SetMediaPlacement(MediaPlacement placement)
+    {
+        if (Prm is not null) Prm.Placement = placement;
+        return this;
     }
 
     /// <summary>创建绘制上下文</summary>
@@ -982,26 +1014,35 @@ public class OFDDoc : IDisposable
     }
 
     /// <summary>
-    /// 将注册的多媒体资源写入 DocumentRes.xml，并在 CommonData 中登记路径。
+    /// 将注册的多媒体资源按引用范围落盘并登记资源声明。
+    /// <para>
     /// 早期实现漏写此步，导致图像字节虽在包内（Doc_0/Res/Mx.png）却无资源声明，
     /// 读者按 ResourceID 找不到 MultiMedia 而加载失败。
+    /// </para>
+    /// <para>
+    /// GB/T 48666-2026 §7.2 a)：仅在一个页面内使用的资源「一般」在
+    /// <c>Page_N/PageRes.xml</c> 中注册，多页共用的资源「应」在
+    /// <c>DocumentRes.xml</c> 中注册。此处交由
+    /// <see cref="ResManager.PlaceMediaResources"/> 按引用范围自动判定：
+    /// 单页专用 → <c>Page_N/Res/</c> + <c>Page_N/PageRes.xml</c>；
+    /// 多页共用 / 范围未知 → <c>Doc_0/Res/</c> + <c>DocumentRes.xml</c>。
+    /// </para>
     /// </summary>
     private void RegisterMediaResources(Pkg.Container.DocDir docDir)
     {
-        var medias = Prm.MultiMedias;
-        if (medias.Count == 0) return;
+        // 落盘并按层级登记（内部会在需要时写 DocumentRes.xml）
+        Prm.PlaceMediaResources(docDir);
 
-        var documentRes = docDir.ObtainDocumentRes();
-        foreach (var mm in medias)
-        {
-            // 去重：已声明过同 ID 的跳过
-            var exists = documentRes.GetMultiMedias()
-                .Any(m => m.ID.Value == mm.ID.Value);
-            if (!exists) documentRes.AddMultiMedia(mm);
-        }
+        if (Prm.MultiMedias.Count == 0) return;
 
-        // 在 CommonData 中登记 DocumentRes 路径（相对 Doc_0 目录）
-        if (_commonData != null && _commonData.DocumentResList.Count == 0)
+        // 只要有任一资源落在文档级，就必须在 CommonData 中登记 DocumentRes 路径。
+        // 判定依据：DocumentRes.xml 中确有条目（页级资源不会写入该文件）。
+        // ⚠️ 必须用 GetDocumentRes（只读）而非 ObtainDocumentRes：后者会无条件创建
+        // DocumentRes.xml，在「全部资源均已下沉到页级」时留下一个空的 <ofd:Res/> 垃圾条目
+        // （还会被版本快照复制到 V_N 下，并被签名纳入保护范围）。
+        var docRes = docDir.GetDocumentRes();
+        var docResMedias = docRes?.GetMultiMedias() ?? new List<Core.Resources.CT_MultiMedia>();
+        if (_commonData != null && _commonData.DocumentResList.Count == 0 && docResMedias.Count > 0)
         {
             _commonData.AddDocumentRes(new STLoc(Pkg.Container.DocDir.DOCUMENT_RES_FILE));
         }

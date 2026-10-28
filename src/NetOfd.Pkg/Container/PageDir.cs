@@ -1,4 +1,5 @@
 using NetOfd.Core.BasicStructure.PageObj;
+using NetOfd.Core.Resources;
 
 namespace NetOfd.Pkg.Container;
 
@@ -71,7 +72,53 @@ public class PageDir : VirtualContainer
 
     public const string CONTENT_FILE = "Content.xml";
 
+    /// <summary>页面资源列表文件名（GB/T 48666-2026 表 1：PageRes.xml）。</summary>
+    public const string PAGE_RES_FILE = "PageRes.xml";
+
+    /// <summary>页面级资源目录名（<c>Page_N/Res</c>）。</summary>
+    public const string RES_DIR = "Res";
+
     public PageDir(string name, string? physicalPath = null) : base(name, physicalPath) { }
+
+    // ────────────────────────────────────────────────────────
+    //  PageRes.xml（页面资源列表）
+    // ────────────────────────────────────────────────────────
+    /// <summary>写入页面资源列表文件。</summary>
+    public void SetPageRes(Res res) => PutFile(PAGE_RES_FILE, res.Element);
+
+    /// <summary>读取页面资源列表文件；不存在返回 null。</summary>
+    public Res? GetPageRes()
+    {
+        var el = GetFile(PAGE_RES_FILE);
+        return el is null ? null : new Res(el);
+    }
+
+    /// <summary>获取或创建页面资源列表文件。</summary>
+    public Res ObtainPageRes()
+    {
+        var res = GetPageRes();
+        if (res is not null) return res;
+        res = new Res();
+        SetPageRes(res);
+        return res;
+    }
+
+    /// <summary>
+    /// 获取或创建 <c>Page_N/Res</c> 子目录（存放仅本页使用的图像等资源文件）。
+    /// 对应 GB/T 48666-2026 表 1「Res 资源文件夹，可分为文档、页面等不同层级」。
+    /// </summary>
+    public ResDir ObtainRes()
+    {
+        if (DirCache.TryGetValue(RES_DIR, out var existing) && existing is ResDir rd)
+            return rd;
+
+        string? childPhys = PhysicalPath is not null ? Path.Combine(PhysicalPath, RES_DIR) : null;
+        if (childPhys is not null && !Directory.Exists(childPhys)) childPhys = null;
+        var resDir = new ResDir(RES_DIR, childPhys);
+        resDir.Parent = this;
+        DirCache[RES_DIR] = resDir;
+        return resDir;
+    }
 
     /// <summary>设置页面内容</summary>
     public void SetContent(PageObject page)

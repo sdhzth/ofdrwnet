@@ -50,10 +50,30 @@ public class PageObject : OFDElement
             .ToList();
     }
 
+    /// <summary>
+    /// 声明页面资源文件（<c>Page_N/PageRes.xml</c>）。
+    /// <para>
+    /// GB/T 33190-2016 表 13（<c>CT_Page</c>）子元素顺序为
+    /// <c>Area, Template*, PageRes*, Content?</c>，故 <c>PageRes</c> 必须排在
+    /// <c>Content</c> <b>之前</b>；直接 <c>Add</c> 到末尾会插在 <c>Content</c> 之后
+    /// 而违反 Schema 顺序（ofdgo / Java ofdrw 均按此顺序解析）。
+    /// </para>
+    /// <para>幂等：同一 loc 重复声明只写一次。</para>
+    /// </summary>
     public PageObject AddPageRes(STLoc loc)
     {
-        var e = new XElement(OfdNs + "PageRes") { Value = loc.Value };
-        _el.Add(e);
+        if (loc is null) return this;
+
+        // 去重：已声明过同一 loc 则跳过
+        foreach (var e in _el.Elements())
+            if (e.Name.LocalName == "PageRes" && e.Value == loc.Value) return this;
+
+        var el = new XElement(OfdNs + "PageRes") { Value = loc.Value };
+
+        // 保序插入：放到第一个 <Content>（或 <PageArea> 之外的首个非头部元素）之前
+        var content = _el.Elements().FirstOrDefault(x => x.Name.LocalName == "Content");
+        if (content is not null) content.AddBeforeSelf(el);
+        else _el.Add(el);
         return this;
     }
 

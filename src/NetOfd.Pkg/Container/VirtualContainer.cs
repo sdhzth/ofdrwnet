@@ -284,16 +284,22 @@ public class VirtualContainer : IDisposable
 
             // ofd.js 期望所有 OFD XML 标签带 ofd: 前缀
             // 对 OFD 命名空间（而非 xmlns 声明根）的文件，转换为前缀格式
+            string xml;
             if (element.Name.Namespace == ofdNs && element.Name.LocalName != "OFD")
             {
-                writer.Write(OfdXmlWithPrefix(element));
+                xml = OfdXmlWithPrefix(element);
             }
             else
             {
-                writer.Write(element.ToString(SaveOptions.DisableFormatting));
+                xml = element.ToString(SaveOptions.DisableFormatting);
             }
-        }
 
+            // GB/T 33190-2016 §7.1 / GB/T 48666-2026 §6.2：
+            // 「容器内各 XML 文件的根节点中应声明 defaults:ofd」。
+            // 在已序列化的文本上注入（唯一可行路径——LINQ-to-XML 追加命名空间声明
+            // 会把元素前缀改写为 defaults:，违反「标识符宜为 ofd」，详见 OFDElement 注释）。
+            writer.Write(NetOfd.Core.OFDElement.InjectDefaultsDeclaration(xml, ofdNs.NamespaceName));
+        }
         // 写二进制文件
         foreach (var (fileName, data) in RawFiles)
         {

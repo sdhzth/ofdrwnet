@@ -71,7 +71,10 @@ public static class SignatureModels
         using var ms = new MemoryStream();
         using (var w = XmlWriter.Create(ms, settings))
             doc.Save(w);
-        return ms.ToArray();
+        // 还原元素前缀为 ofd:（GB/T 33190-2016 §7.1「标识符宜为 ofd」）。
+        // 输入 XML 若已带 xmlns:defaults 声明，LINQ-to-XML 序列化会把元素前缀
+        // 分配给 defaults:（实测 <ofd:OFD> → <defaults:OFD>），故在此文本层还原。
+        return NetOfd.Core.OFDElement.RestoreOfdPrefixBytes(ms.ToArray());
     }
 
     /// <summary>构建签名列表文件（Signatures.xml）字节。</summary>

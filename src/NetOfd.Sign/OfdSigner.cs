@@ -326,13 +326,25 @@ public sealed class OfdSigner
 
         // 4. 更新 OFD.xml 入口（幂等）
         if (map.TryGetValue("OFD.xml", out var ofdBytes))
+        {
             map["OFD.xml"] = SignatureModels.UpdateOfdXmlBytes(ofdBytes, signaturesListFile);
+            // GB/T 33190-2016 §7.1 / GB/T 48666-2026 §6.2：根节点应声明 defaults:ofd。
+            // 必须在杂凑计算之前注入（OFD.xml 通常纳入签名保护范围）。
+            // 置于 UpdateOfdXmlBytes 之后：LINQ-to-XML 重写会重分配命名空间前缀，
+            // 若先注入 defaults 声明，重写会把元素前缀改为 defaults:，违反「标识符宜为 ofd」。
+            map["OFD.xml"] = NetOfd.Core.OFDElement.InjectDefaultsDeclarationBytes(
+                map["OFD.xml"], SignatureModels.Ns.NamespaceName);
+        }
 
         // 5. 更新签名列表文件（保留已有记录 + 新记录，更新最大 ID）。
         //    对齐 Java OFDSigner.buildSignature：先写入列表文件再计算杂凑，
         //    使整体保护模式下 Signatures.xml 自身也纳入 References 保护。
         existingRecords.Add((signId, signType, signatureFile, relativeId));
         map[signaturesListFile] = SignatureModels.BuildSignaturesListBytes(existingRecords, signIdProvider.Get());
+        // GB/T 33190-2016 §7.1 / GB/T 48666-2026 §6.2：根节点应声明 defaults:ofd。
+        // 必须在杂凑计算之前注入，否则 Signatures.xml 纳入保护范围时签名会失效。
+        map[signaturesListFile] = NetOfd.Core.OFDElement.InjectDefaultsDeclarationBytes(
+            map[signaturesListFile], SignatureModels.Ns.NamespaceName);
 
         // 6. 印章写入包内（先于杂凑计算，使其参与保护）
         if (sealBytes != null)
@@ -348,6 +360,11 @@ public sealed class OfdSigner
             references: refs, signedValueLoc: signedValueFile,
             stampAnnots: appearances,
             sealLoc: sealBytes != null ? "/" + sealFile.Replace('\\', '/') : null);
+
+        // GB/T 33190-2016 §7.1 / GB/T 48666-2026 §6.2：签名描述文件根节点亦应声明 defaults:ofd。
+        // 必须在计算签名值之前注入，否则签名值与文件实际字节不符。
+        descBytes = NetOfd.Core.OFDElement.InjectDefaultsDeclarationBytes(
+            descBytes, SignatureModels.Ns.NamespaceName);
 
         // 9. 容器计算签名值
         var signedValue = signFunc(descBytes, signatureFile);

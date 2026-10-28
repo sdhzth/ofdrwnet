@@ -130,7 +130,18 @@ public class OfdHDocumentGeneratorTest : IClassFixture<OfdHGeneratedDoc>
         Assert.Contains("OFDEntries.xml", names);
         Assert.Contains("Doc_0/Document.xml", names);
         Assert.Contains("Doc_0/PublicRes.xml", names);
-        Assert.Contains("Doc_0/DocumentRes.xml", names);
+        // §7.2 a)：字型/绘制参数/多页共用资源「应」在 DocumentRes.xml 注册；
+        //          仅在一个页面内使用的资源「一般」在 Page_N/PageRes.xml 注册。
+        // 两者不必同时存在（本演示文档唯一图像——心电图——仅被 Page_2 引用，
+        // 故下沉到页级，文档级不再产生空壳 DocumentRes.xml），
+        // 但必须至少有一处资源声明，不得出现「包内有资源却无声明」。
+        bool hasDocRes = names.Contains("Doc_0/DocumentRes.xml");
+        bool hasPageRes = names.Any(n => n.EndsWith("/PageRes.xml", StringComparison.Ordinal));
+        Assert.True(hasDocRes || hasPageRes,
+            $"资源必须登记在 DocumentRes.xml 或 Page_N/PageRes.xml 之一（§7.2 a）；实际条目: {string.Join(", ", names)}");
+        // 单页专用图像（Page_2 心电图）应下沉到页级资源列表
+        Assert.Contains("Doc_0/Pages/Page_2/PageRes.xml", names);
+        Assert.Contains("Doc_0/Pages/Page_2/Res/Image_1.png", names);
         Assert.Contains("Doc_0/Pages/Page_0/Content.xml", names);
         Assert.Contains("Doc_0/Pages/Page_1/Content.xml", names);
         Assert.Contains("Doc_0/Pages/Page_2/Content.xml", names);
@@ -152,7 +163,7 @@ public class OfdHDocumentGeneratorTest : IClassFixture<OfdHGeneratedDoc>
         Assert.Equal("signedvalue.dat", names[^1]);
         // 内容先于二进制资源
         int contentIdx = names.IndexOf("Doc_0/Pages/Page_0/Content.xml");
-        int fontIdx = names.FindIndex(n => n.EndsWith("Font_FangSong.ttf", StringComparison.Ordinal));
+        int fontIdx = names.FindIndex(n => n.EndsWith("Font_1.ttf", StringComparison.Ordinal));
         Assert.True(contentIdx > 0 && fontIdx > contentIdx,
             $"内容应先于字型资源（content={contentIdx}, font={fontIdx}）");
     }
@@ -181,7 +192,7 @@ public class OfdHDocumentGeneratorTest : IClassFixture<OfdHGeneratedDoc>
         Assert.Null(_doc.Result.FontWarning);
 
         var names = _doc.EntryNames();
-        Assert.Contains(names, n => n.EndsWith("Res/Font_FangSong.ttf", StringComparison.Ordinal));
+        Assert.Contains(names, n => n.EndsWith("Res/Font_1.ttf", StringComparison.Ordinal));
 
         var publicRes = _doc.ReadEntry("Doc_0/PublicRes.xml");
         Assert.NotNull(publicRes);
@@ -190,7 +201,7 @@ public class OfdHDocumentGeneratorTest : IClassFixture<OfdHGeneratedDoc>
         var font = doc.Descendants(ofdNs + "Font")
             .FirstOrDefault(f => (string?)f.Attribute("FontName") == "仿宋");
         Assert.NotNull(font);
-        Assert.Equal("Res/Font_FangSong.ttf", font!.Element(ofdNs + "FontFile")?.Value);
+        Assert.Equal("Res/Font_1.ttf", font!.Element(ofdNs + "FontFile")?.Value);
     }
 
     // ── 7.6 版本快照 ─────────────────────────────────────────────────────
