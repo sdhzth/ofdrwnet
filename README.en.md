@@ -385,7 +385,8 @@ Release notes for every version (one Chinese and one English file per version) l
 
 | Version | 中文 | English |
 |---|---|---|
-| **v1.3.3** (current) | [v1.3.3.md](docs/releases/v1.3.3.md) | [v1.3.3.en.md](docs/releases/v1.3.3.en.md) |
+| **v1.3.4** (current) | [v1.3.4.md](docs/releases/v1.3.4.md) | [v1.3.4.en.md](docs/releases/v1.3.4.en.md) |
+| v1.3.3 | [v1.3.3.md](docs/releases/v1.3.3.md) | [v1.3.3.en.md](docs/releases/v1.3.3.en.md) |
 | v1.3.2 | [v1.3.2.md](docs/releases/v1.3.2.md) | [v1.3.2.en.md](docs/releases/v1.3.2.en.md) |
 | v1.3.1 | [v1.3.1.md](docs/releases/v1.3.1.md) | [v1.3.1.en.md](docs/releases/v1.3.1.en.md) |
 | v1.3.0 | [v1.3.0.md](docs/releases/v1.3.0.md) | [v1.3.0.en.md](docs/releases/v1.3.0.en.md) |
