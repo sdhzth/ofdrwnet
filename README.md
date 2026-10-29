@@ -367,7 +367,8 @@ dotnet run --project samples/OfdHWriter -- <out.ofd> [--work <工作目录>] [--
 
 | 版本 | 中文 | English |
 |---|---|---|
-| **v1.3.2**（当前） | [v1.3.2.md](docs/releases/v1.3.2.md) | [v1.3.2.en.md](docs/releases/v1.3.2.en.md) |
+| **v1.3.3**（当前） | [v1.3.3.md](docs/releases/v1.3.3.md) | [v1.3.3.en.md](docs/releases/v1.3.3.en.md) |
+| v1.3.2 | [v1.3.2.md](docs/releases/v1.3.2.md) | [v1.3.2.en.md](docs/releases/v1.3.2.en.md) |
 | v1.3.1 | [v1.3.1.md](docs/releases/v1.3.1.md) | [v1.3.1.en.md](docs/releases/v1.3.1.en.md) |
 | v1.3.0 | [v1.3.0.md](docs/releases/v1.3.0.md) | [v1.3.0.en.md](docs/releases/v1.3.0.en.md) |
 
